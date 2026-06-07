@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.parkhub.app.ui.screens.FlotteScreen
+import com.parkhub.app.ui.screens.SucheScreen
 import com.parkhub.app.ui.theme.Gray
 
 
@@ -67,7 +68,7 @@ fun MainScreen() {
             contentAlignment = Alignment.Center
         ) {
             when (selectedItem) {
-                0 -> Text("Suchen Screen kommt hier")
+                0 -> SucheScreen()
                 1 -> FlotteScreen()
             }
         }
