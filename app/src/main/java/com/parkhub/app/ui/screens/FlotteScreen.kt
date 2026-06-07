@@ -3,15 +3,15 @@ package com.parkhub.app.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.sensitiveContent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,35 +52,43 @@ fun FlotteScreen() {
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Icon(
-                    imageVector = Icons.Filled.Search,
+                    imageVector = Icons.Outlined.Search,
                     contentDescription = "Suchen",
                     tint = MaterialTheme.colorScheme.onBackground
                 )
             }
 
-            // Segmented Button: Fahrzeuge / Fahrer
-            Row(
+            SingleChoiceSegmentedButtonRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.Center
+                    .padding(horizontal = 16.dp)
             ) {
                 tabs.forEachIndexed { index, title ->
-                    OutlinedButton(
+                    SegmentedButton(
+                        selected = selectedTab == index,
                         onClick = { selectedTab = index },
-                        modifier = Modifier.weight(1f),
-                        shape = when (index) {
-                            0 -> RoundedCornerShape(topStart = 50.dp, bottomStart = 50.dp)
-                            else -> RoundedCornerShape(topEnd = 50.dp, bottomEnd = 50.dp)
-                        },
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = if (selectedTab == index) ParkHubGreenContainer else Color.Transparent,
-                            contentColor = if (selectedTab == index) ParkHubGreen else Gray
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = tabs.size
+                        ),
+                        icon = {},
+                        border = SegmentedButtonDefaults.borderStroke(
+                            color = Color.Transparent
+                        ),
+                        colors = SegmentedButtonDefaults.colors(
+                            activeContainerColor = White,
+                            activeContentColor = MaterialTheme.colorScheme.onSurface,
+                            activeBorderColor = Color.Transparent,
+                            inactiveContainerColor = Color(0xFFE8E8E8),
+                            inactiveContentColor = Gray,
+                            inactiveBorderColor = Color.Transparent
                         )
                     ) {
                         Text(
                             text = title,
-                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
+                            fontSize = 20.sp,
+                            fontWeight = if (selectedTab == index)
+                                FontWeight.Bold else FontWeight.Normal
                         )
                     }
                 }
@@ -88,7 +96,7 @@ fun FlotteScreen() {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Filter Chips: Alle / Aktiv / In Wartung
+            // Filter Chips
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -99,10 +107,10 @@ fun FlotteScreen() {
                     FilterChip(
                         selected = selectedFilter == index,
                         onClick = { selectedFilter = index },
-                        label = { Text(label) },
+                        label = { Text(text = label, fontSize = 17.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = ParkHubGreenContainer,
-                            selectedLabelColor = ParkHubGreen
+                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onBackground
                         )
                     )
                 }
@@ -110,7 +118,7 @@ fun FlotteScreen() {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Fahrzeugliste (Nutzt das ausgelagerte FahrzeugItem)
+            // Fahrzeugliste
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -124,14 +132,17 @@ fun FlotteScreen() {
 
         // FAB
         FloatingActionButton(
-            onClick = { /* Fahrzeug hinzufügen */ },
+            onClick = { },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
             containerColor = ParkHubGreen,
             contentColor = White
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "Fahrzeug hinzufügen")
+            Icon(
+                imageVector = Icons.Outlined.Add,
+                contentDescription = "Fahrzeug hinzufügen"
+            )
         }
     }
 }

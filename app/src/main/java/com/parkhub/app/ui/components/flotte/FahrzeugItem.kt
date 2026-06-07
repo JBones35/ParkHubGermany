@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,43 +18,34 @@ import androidx.compose.ui.unit.sp
 import com.parkhub.app.model.Fahrzeug
 import com.parkhub.app.model.FahrzeugStatus
 import com.parkhub.app.ui.theme.Gray
-import com.parkhub.app.ui.theme.ParkHubGreen
-import com.parkhub.app.ui.theme.ParkHubGreenContainer
 import com.parkhub.app.ui.theme.StatusWartung
 
 @Composable
 fun FahrzeugItem(fahrzeug: Fahrzeug, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Fahrzeug Icon
+            // Fahrzeug Icon Box
             Box(
                 modifier = Modifier
                     .size(44.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(
                         if (fahrzeug.status == FahrzeugStatus.WARTUNG)
-                            Color(0xFFFFE0B2) else ParkHubGreenContainer
+                            Color(0xFFFFE0B2) else MaterialTheme.colorScheme.secondaryContainer
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = if (fahrzeug.status == FahrzeugStatus.WARTUNG)
-                        Icons.Filled.Build else Icons.Filled.LocalShipping,
+                        Icons.Filled.Build else Icons.Outlined.LocalShipping,
                     contentDescription = null,
                     tint = if (fahrzeug.status == FahrzeugStatus.WARTUNG)
-                        StatusWartung else ParkHubGreen,
+                        StatusWartung else MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -65,8 +56,8 @@ fun FahrzeugItem(fahrzeug: Fahrzeug, modifier: Modifier = Modifier) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = fahrzeug.kennzeichen,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
@@ -76,7 +67,14 @@ fun FahrzeugItem(fahrzeug: Fahrzeug, modifier: Modifier = Modifier) {
                 )
             }
 
+            // Status Badge auf der rechten Seite
             StatusBadge(status = fahrzeug.status)
         }
+
+        HorizontalDivider(
+            modifier = Modifier.fillMaxWidth(),
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+        )
     }
 }
