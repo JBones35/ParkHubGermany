@@ -11,7 +11,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.parkhub.app.model.tabs
 import com.parkhub.app.ui.components.suche.*
-import com.parkhub.app.ui.theme.*
 import org.osmdroid.util.GeoPoint
 
 val fahrzeugTypen = listOf(
@@ -83,8 +82,10 @@ fun SucheScreen() {
     }
 
     val datePickerState = rememberDatePickerState()
-    val timePickerStateStart = rememberTimePickerState(9, 0, is24Hour = true)
-    val timePickerStateEnd = rememberTimePickerState(11, 0, is24Hour = true)
+    var startHour by remember { mutableStateOf(9) }
+    var startMinute by remember { mutableStateOf(0) }
+    var endHour by remember { mutableStateOf(11) }
+    var endMinute by remember { mutableStateOf(0) }
 
     val markers = listOf(
         Pair(GeoPoint(49.0069, 8.4037), "3,40 €"),
@@ -116,45 +117,45 @@ fun SucheScreen() {
     )
     SucheTimePickerDialog(
         show = showTimePickerStart,
-        state = timePickerStateStart,
         title = "Startzeit wählen",
+        selectedHour = startHour,
+        selectedMinute = startMinute,
+        onHourSelected = { startHour = it },
+        onMinuteSelected = { startMinute = it },
         onDismiss = { showTimePickerStart = false },
         onConfirm = {
-            val startMinuten = timePickerStateStart.hour * 60 + timePickerStateStart.minute
-            val endMinuten = timePickerStateEnd.hour * 60 + timePickerStateEnd.minute
+            val startMinuten = startHour * 60 + startMinute
+            val endMinuten = endHour * 60 + endMinute
             if (uhrzeitEnd.isEmpty() || startMinuten < endMinuten) {
-                uhrzeitStart = "%02d:%02d".format(
-                    timePickerStateStart.hour,
-                    timePickerStateStart.minute
-                )
+                uhrzeitStart = "%02d:%02d".format(startHour, startMinute)
                 showTimePickerStart = false
             } else {
                 showTimePickerStart = false
-                showFehler = true
-            }
-        }
-    )
-    SucheTimePickerDialog(
-        show = showTimePickerEnd,
-        state = timePickerStateEnd,
-        title = "Endzeit wählen",
-        onDismiss = { showTimePickerEnd = false },
-        onConfirm = {
-            val startMinuten = timePickerStateStart.hour * 60 + timePickerStateStart.minute
-            val endMinuten = timePickerStateEnd.hour * 60 + timePickerStateEnd.minute
-            if (uhrzeitStart.isEmpty() || endMinuten > startMinuten) {
-                uhrzeitEnd = "%02d:%02d".format(
-                    timePickerStateEnd.hour,
-                    timePickerStateEnd.minute
-                )
-                showTimePickerEnd = false
-            } else {
-                showTimePickerEnd = false
                 showFehler = true
             }
         }
     )
 
+    SucheTimePickerDialog(
+        show = showTimePickerEnd,
+        title = "Endzeit wählen",
+        selectedHour = endHour,
+        selectedMinute = endMinute,
+        onHourSelected = { endHour = it },
+        onMinuteSelected = { endMinute = it },
+        onDismiss = { showTimePickerEnd = false },
+        onConfirm = {
+            val startMinuten = startHour * 60 + startMinute
+            val endMinuten = endHour * 60 + endMinute
+            if (uhrzeitStart.isEmpty() || endMinuten > startMinuten) {
+                uhrzeitEnd = "%02d:%02d".format(endHour, endMinute)
+                showTimePickerEnd = false
+            } else {
+                showTimePickerEnd = false
+                showFehler = true
+            }
+        }
+    )
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
