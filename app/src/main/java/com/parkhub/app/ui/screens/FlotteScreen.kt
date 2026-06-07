@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.sensitiveContent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,7 +36,6 @@ fun FlotteScreen() {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
 
-            // Titel + Suche
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -86,7 +84,7 @@ fun FlotteScreen() {
                     ) {
                         Text(
                             text = title,
-                            fontSize = 20.sp,
+                            fontSize = 14.sp,
                             fontWeight = if (selectedTab == index)
                                 FontWeight.Bold else FontWeight.Normal
                         )
@@ -96,7 +94,6 @@ fun FlotteScreen() {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Filter Chips
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -107,10 +104,10 @@ fun FlotteScreen() {
                     FilterChip(
                         selected = selectedFilter == index,
                         onClick = { selectedFilter = index },
-                        label = { Text(text = label, fontSize = 17.sp) },
+                        label = { Text(text = label, fontSize = 13.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onBackground
+                            selectedContainerColor = ParkHubGreenContainer,
+                            selectedLabelColor = ParkHubGreen
                         )
                     )
                 }
@@ -118,7 +115,6 @@ fun FlotteScreen() {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Fahrzeugliste
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -130,7 +126,6 @@ fun FlotteScreen() {
             }
         }
 
-        // FAB
         FloatingActionButton(
             onClick = { },
             modifier = Modifier
