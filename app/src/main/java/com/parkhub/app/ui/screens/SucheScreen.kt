@@ -67,6 +67,8 @@ fun SucheScreen() {
     var showTimePickerEnd by remember { mutableStateOf(false) }
     var showSortieren by remember { mutableStateOf(false) }
     var selectedSortierung by remember { mutableStateOf(sortierOptionen[0]) }
+    var showFehler by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val sortierteListe by remember(selectedSortierung) {
         derivedStateOf {
@@ -90,6 +92,17 @@ fun SucheScreen() {
         Pair(GeoPoint(49.0050, 8.4060), "2,80 €")
     )
 
+    // Snackbar Fehler anzeigen
+    LaunchedEffect(showFehler) {
+        if (showFehler) {
+            snackbarHostState.showSnackbar(
+                message = "Die Startzeit muss vor der Endzeit liegen.",
+                duration = SnackbarDuration.Short
+            )
+            showFehler = false
+        }
+    }
+
     // Dialoge
     SucheDatePickerDialog(
         show = showDatePicker,
@@ -107,11 +120,18 @@ fun SucheScreen() {
         title = "Startzeit wählen",
         onDismiss = { showTimePickerStart = false },
         onConfirm = {
-            uhrzeitStart = "%02d:%02d".format(
-                timePickerStateStart.hour,
-                timePickerStateStart.minute
-            )
-            showTimePickerStart = false
+            val startMinuten = timePickerStateStart.hour * 60 + timePickerStateStart.minute
+            val endMinuten = timePickerStateEnd.hour * 60 + timePickerStateEnd.minute
+            if (uhrzeitEnd.isEmpty() || startMinuten < endMinuten) {
+                uhrzeitStart = "%02d:%02d".format(
+                    timePickerStateStart.hour,
+                    timePickerStateStart.minute
+                )
+                showTimePickerStart = false
+            } else {
+                showTimePickerStart = false
+                showFehler = true
+            }
         }
     )
     SucheTimePickerDialog(
@@ -120,102 +140,117 @@ fun SucheScreen() {
         title = "Endzeit wählen",
         onDismiss = { showTimePickerEnd = false },
         onConfirm = {
-            uhrzeitEnd = "%02d:%02d".format(
-                timePickerStateEnd.hour,
-                timePickerStateEnd.minute
-            )
-            showTimePickerEnd = false
+            val startMinuten = timePickerStateStart.hour * 60 + timePickerStateStart.minute
+            val endMinuten = timePickerStateEnd.hour * 60 + timePickerStateEnd.minute
+            if (uhrzeitStart.isEmpty() || endMinuten > startMinuten) {
+                uhrzeitEnd = "%02d:%02d".format(
+                    timePickerStateEnd.hour,
+                    timePickerStateEnd.minute
+                )
+                showTimePickerEnd = false
+            } else {
+                showTimePickerEnd = false
+                showFehler = true
+            }
         }
     )
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(bottom = 16.dp)
-    ) {
-        item { SucheTitelRow() }
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+                .padding(innerPadding),
+            contentPadding = PaddingValues(bottom = 16.dp)
+        ) {
+            item { SucheTitelRow() }
 
-        item {
-            OrtSucheField(
-                ort = ort,
-                onOrtChange = { ort = it },
-                onOrtSelected = { _, lat, lng -> ortLat = lat; ortLng = lng }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        item {
-            SucheDatumZeitSection(
-                datum = datum,
-                onDatumClick = { showDatePicker = true },
-                uhrzeitStart = uhrzeitStart,
-                onUhrzeitStartClick = { showTimePickerStart = true },
-                uhrzeitEnd = uhrzeitEnd,
-                onUhrzeitEndClick = { showTimePickerEnd = true }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        item {
-            SucheFahrzeugDropdown(
-                selectedFahrzeugTyp = selectedFahrzeugTyp,
-                dropdownExpanded = dropdownExpanded,
-                onDropdownChange = { dropdownExpanded = it },
-                onFahrzeugTypSelected = {
-                    selectedFahrzeugTyp = it
-                    dropdownExpanded = false
-                },
-                fahrzeugTypen = fahrzeugTypen
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        item {
-            SucheTabRow(
-                tabs = tabs,
-                selectedView = selectedView,
-                onViewSelected = { selectedView = it }
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        item {
-            SucheErgebnisHeader(
-                anzahl = sortierteListe.size,
-                showSortieren = showSortieren,
-                onSortierenClick = { showSortieren = true },
-                onSortierenDismiss = { showSortieren = false },
-                selectedSortierung = selectedSortierung,
-                onSortierungSelected = {
-                    selectedSortierung = it
-                    showSortieren = false
-                }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        if (selectedView == 0) {
             item {
-                OsmMapView(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(220.dp)
-                        .clip(RoundedCornerShape(12.dp)),
-                    latitude = ortLat,
-                    longitude = ortLng,
-                    markers = markers
+                OrtSucheField(
+                    ort = ort,
+                    onOrtChange = { ort = it },
+                    onOrtSelected = { _, lat, lng ->
+                        ortLat = lat
+                        ortLng = lng
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            item {
+                SucheDatumZeitSection(
+                    datum = datum,
+                    onDatumClick = { showDatePicker = true },
+                    uhrzeitStart = uhrzeitStart,
+                    onUhrzeitStartClick = { showTimePickerStart = true },
+                    uhrzeitEnd = uhrzeitEnd,
+                    onUhrzeitEndClick = { showTimePickerEnd = true }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            item {
+                SucheFahrzeugDropdown(
+                    selectedFahrzeugTyp = selectedFahrzeugTyp,
+                    dropdownExpanded = dropdownExpanded,
+                    onDropdownChange = { dropdownExpanded = it },
+                    onFahrzeugTypSelected = {
+                        selectedFahrzeugTyp = it
+                        dropdownExpanded = false
+                    },
+                    fahrzeugTypen = fahrzeugTypen
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
-        }
 
-        items(items = sortierteListe, key = { it.id }) { stellplatz ->
-            StellplatzListeItem(
-                stellplatz = stellplatz,
-                onClick = { }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            item {
+                SucheTabRow(
+                    tabs = tabs,
+                    selectedView = selectedView,
+                    onViewSelected = { selectedView = it }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            item {
+                SucheErgebnisHeader(
+                    anzahl = sortierteListe.size,
+                    showSortieren = showSortieren,
+                    onSortierenClick = { showSortieren = true },
+                    onSortierenDismiss = { showSortieren = false },
+                    selectedSortierung = selectedSortierung,
+                    onSortierungSelected = {
+                        selectedSortierung = it
+                        showSortieren = false
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            if (selectedView == 0) {
+                item {
+                    OsmMapView(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        latitude = ortLat,
+                        longitude = ortLng,
+                        markers = markers
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+            }
+
+            items(items = sortierteListe, key = { it.id }) { stellplatz ->
+                StellplatzListeItem(
+                    stellplatz = stellplatz,
+                    onClick = { }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
     }
 }
