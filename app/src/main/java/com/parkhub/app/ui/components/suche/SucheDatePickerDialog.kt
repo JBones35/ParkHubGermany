@@ -18,7 +18,9 @@ fun SucheDatePickerDialog(
         confirmButton = {
             TextButton(onClick = {
                 state.selectedDateMillis?.let { onConfirm(it) }
-            }) { Text("OK", color = ParkHubGreen) }
+            }) {
+                Text("OK", color = ParkHubGreen)
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
@@ -34,40 +36,4 @@ fun SucheDatePickerDialog(
             )
         )
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SucheTimePickerDialog(
-    show: Boolean,
-    state: TimePickerState,
-    title: String,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    if (!show) return
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("OK", color = ParkHubGreen)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Abbrechen", color = Gray)
-            }
-        },
-        title = { Text(title) },
-        text = {
-            TimePicker(
-                state = state,
-                colors = TimePickerDefaults.colors(
-                    selectorColor = ParkHubGreen,
-                    timeSelectorSelectedContainerColor = ParkHubGreenContainer,
-                    timeSelectorSelectedContentColor = ParkHubGreen
-                )
-            )
-        }
-    )
 }
