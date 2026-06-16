@@ -1,4 +1,4 @@
-package com.parkhub.app.ui.screens
+﻿package com.parkhub.app.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,27 +10,60 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.parkhub.app.data.AppDatabase
+import com.parkhub.app.model.FahrerStatus
 import com.parkhub.app.model.FahrzeugStatus
-import com.parkhub.app.model.fahrzeugListe
+import com.parkhub.app.ui.components.PillTab
+import com.parkhub.app.ui.components.flotte.FahrerItem
 import com.parkhub.app.ui.components.flotte.FahrzeugItem
+import com.parkhub.app.ui.components.PillTabRow
 import com.parkhub.app.ui.theme.*
 
 @Composable
-fun FlotteScreen() {
+fun FlotteScreen(
+    viewModel: FlotteViewModel = viewModel(
+        factory = FlotteViewModelFactory(
+            fahrerDao = AppDatabase.getDatabase(LocalContext.current).fahrerDao(),
+            fahrzeugDao = AppDatabase.getDatabase(LocalContext.current).fahrzeugDao()
+        )
+    )
+) {
     var selectedTab by remember { mutableStateOf(0) }
     var selectedFilter by remember { mutableStateOf(0) }
 
-    val tabs = listOf("Fahrzeuge (12)", "Fahrer (9)")
-    val filter = listOf("Alle", "Aktiv", "In Wartung")
+    val fahrerListFromDb by viewModel.fahrerList.collectAsState(initial = emptyList())
+    val fahrzeugListFromDb by viewModel.fahrzeugList.collectAsState(initial = emptyList())
 
-    val gefilterteListe = when (selectedFilter) {
-        1 -> fahrzeugListe.filter { it.status == FahrzeugStatus.AKTIV }
-        2 -> fahrzeugListe.filter { it.status == FahrzeugStatus.WARTUNG }
-        else -> fahrzeugListe
+    val tabs = listOf(
+        PillTab("Fahrzeuge (${fahrzeugListFromDb.size})"),
+        PillTab("Fahrer (${fahrerListFromDb.size})")
+    )
+
+    val fahrzeugFilter = listOf("Alle", "Aktiv", "In Wartung")
+    val fahrerFilter = listOf("Alle", "Frei", "Eingesetzt", "Abwesend")
+
+    val currentFilter = if (selectedTab == 0) fahrzeugFilter else fahrerFilter
+
+    val gefilterteFahrzeugListe = when (selectedFilter) {
+        1 -> fahrzeugListFromDb.filter { it.status == FahrzeugStatus.AKTIV }
+        2 -> fahrzeugListFromDb.filter { it.status == FahrzeugStatus.WARTUNG }
+        else -> fahrzeugListFromDb
+    }
+
+    val gefilterteFahrerliste = when (selectedFilter) {
+        1 -> fahrerListFromDb.filter { it.status == FahrerStatus.FREI }
+        2 -> fahrerListFromDb.filter { it.status == FahrerStatus.EINGESETZT }
+        3 -> fahrerListFromDb.filter { it.status == FahrerStatus.ABWESEND }
+        else -> fahrerListFromDb
+    }
+
+    LaunchedEffect(selectedTab) {
+        selectedFilter = 0
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -56,41 +89,11 @@ fun FlotteScreen() {
                 )
             }
 
-            SingleChoiceSegmentedButtonRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            ) {
-                tabs.forEachIndexed { index, title ->
-                    SegmentedButton(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = index,
-                            count = tabs.size
-                        ),
-                        icon = {},
-                        border = SegmentedButtonDefaults.borderStroke(
-                            color = Color.Transparent
-                        ),
-                        colors = SegmentedButtonDefaults.colors(
-                            activeContainerColor = White,
-                            activeContentColor = MaterialTheme.colorScheme.onSurface,
-                            activeBorderColor = Color.Transparent,
-                            inactiveContainerColor = Color(0xFFE8E8E8),
-                            inactiveContentColor = Gray,
-                            inactiveBorderColor = Color.Transparent
-                        )
-                    ) {
-                        Text(
-                            text = title,
-                            fontSize = 14.sp,
-                            fontWeight = if (selectedTab == index)
-                                FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-                }
-            }
+            PillTabRow(
+                tabs = tabs,
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it }
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -100,14 +103,13 @@ fun FlotteScreen() {
                     .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                filter.forEachIndexed { index, label ->
+                currentFilter.forEachIndexed { index, label ->
                     FilterChip(
                         selected = selectedFilter == index,
                         onClick = { selectedFilter = index },
                         label = { Text(text = label, fontSize = 13.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = ParkHubGreenContainer,
-                            selectedLabelColor = ParkHubGreen
+                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer
                         )
                     )
                 }
@@ -120,8 +122,13 @@ fun FlotteScreen() {
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(gefilterteListe) { fahrzeug ->
-                    FahrzeugItem(fahrzeug = fahrzeug)
+                when (selectedTab) {
+                    0 -> items(gefilterteFahrzeugListe) { fahrzeug ->
+                        FahrzeugItem(fahrzeug = fahrzeug)
+                    }
+                    1 -> items(gefilterteFahrerliste) { fahrer ->
+                        FahrerItem(fahrer = fahrer)
+                    }
                 }
             }
         }
@@ -136,7 +143,7 @@ fun FlotteScreen() {
         ) {
             Icon(
                 imageVector = Icons.Outlined.Add,
-                contentDescription = "Fahrzeug hinzufügen"
+                contentDescription = if (selectedTab == 0) "Fahrzeug hinzufügen" else "Fahrer hinzufügen"
             )
         }
     }

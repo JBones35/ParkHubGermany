@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -39,6 +40,7 @@ android {
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.ui)
@@ -49,6 +51,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.ui)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.osmdroid)
     implementation(libs.accompanist.permissions)
@@ -57,4 +60,7 @@ dependencies {
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.gson)
+    implementation(libs.room.runtime)
+    implementation(libs.datastore.preferences)
+    ksp(libs.room.compiler)
 }
