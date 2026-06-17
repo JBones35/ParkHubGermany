@@ -39,20 +39,6 @@ class FlotteViewModel(
                 )
             }
         }
-
-    init {
-        viewModelScope.launch {
-            if (fahrerDao.getAllFahrer().firstOrNull().isNullOrEmpty()) {
-                fahrerDao.insertAll(fahrerListe)
-            }
-            if (fahrzeugTypDao.getAll().firstOrNull().isNullOrEmpty()) {
-                fahrzeugTypDao.insertAll(fahrzeugTypListe)
-            }
-            if (fahrzeugDao.getAllFahrzeug().firstOrNull().isNullOrEmpty()) {
-                fahrzeugDao.insertAll(fahrzeugListe)
-            }
-        }
-    }
 }
 
 class FlotteViewModelFactory(

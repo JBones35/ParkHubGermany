@@ -6,10 +6,6 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.util.UUID
 
-enum class StellplatzStatus {
-    FREI, BELEGT, RESERVIERT
-}
-
 @Entity(
     tableName = "stellplatz",
     foreignKeys = [
@@ -31,7 +27,6 @@ data class Stellplatz(
     val laenge_cm: Float,
     val hoehe_cm: Float,
     val preis_stunde: Float,
-    val status: StellplatzStatus = StellplatzStatus.FREI,
     val gps_lat: Float,
     val gps_lng: Float
 )

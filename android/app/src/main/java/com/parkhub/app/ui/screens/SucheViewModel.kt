@@ -15,14 +15,26 @@ import com.parkhub.app.model.bewertungListe
 import com.parkhub.app.model.fahrzeugTypListe
 import com.parkhub.app.model.stellplatzListe
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+
+data class StellplatzFilter(
+    val minPreis: Float = 2.0f,
+    val maxPreis: Float = 8.0f,
+    val minBewertung: Float = 0f,
+    val fahrzeugTyp: FahrzeugTyp? = null,
+    val von: Long = System.currentTimeMillis(),
+    val bis: Long = System.currentTimeMillis() + 2 * 60 * 60 * 1000 // +2h Default
+)
 
 data class StellplatzMitDetails(
     val stellplatz: Stellplatz,
@@ -41,26 +53,30 @@ class SucheViewModel(
 
     val fahrzeugTypListeFlow: Flow<List<FahrzeugTyp>> = fahrzeugTypDao.getAll()
 
-    init {
-        viewModelScope.launch {
-            if (adresseDao.getAll().firstOrNull().isNullOrEmpty()) {
-                adresseDao.insertAll(adresseListe)
-            }
-            if (stellplatzDao.getAll().firstOrNull().isNullOrEmpty()) {
-                stellplatzDao.insertAll(stellplatzListe)
-            }
-            if (bewertungDao.getAll().firstOrNull().isNullOrEmpty()) {
-                bewertungDao.insertAll(bewertungListe)
-            }
-            if (fahrzeugTypDao.getAll().firstOrNull().isNullOrEmpty()) {
-                fahrzeugTypDao.insertAll(fahrzeugTypListe)
-            }
-        }
+    private val _filter = MutableStateFlow(StellplatzFilter())
+    val filter: StateFlow<StellplatzFilter> = _filter
+
+    fun updateFilter(neuerFilter: StellplatzFilter) {
+        _filter.value = neuerFilter
     }
+
+    private val gefilterteStellplaetze: Flow<List<Stellplatz>> =
+        _filter.flatMapLatest { f ->
+            stellplatzDao.getGefiltert(
+                minFahrzeugLaenge = f.fahrzeugTyp?.laenge_cm ?: 0f,
+                minFahrzeugBreite = f.fahrzeugTyp?.breite_cm ?: 0f,
+                minFahrzeugHoehe = f.fahrzeugTyp?.hoehe_cm ?: 0f,
+                minPreis = f.minPreis,
+                maxPreis = f.maxPreis,
+                minBewertung = f.minBewertung,
+                von = f.von,
+                bis = f.bis
+            )
+        }
 
     private val basisDaten: Flow<List<Triple<Stellplatz, Adresse?, Pair<Float, Int>>>> =
         combine(
-            stellplatzDao.getAll(),
+            gefilterteStellplaetze,
             adresseDao.getAll(),
             bewertungDao.getAll()
         ) { stellplaetze, adressen, bewertungen ->
@@ -74,7 +90,7 @@ class SucheViewModel(
             }
         }
 
-    fun stellplaetzeMitEntfernung(suchLat: Double, suchLng: Double): Flow<List<StellplatzMitDetails>> =
+    fun stellplaetzeMitEntfernung(suchLat: Double, suchLng: Double, radiusMeter: Int = 2000): Flow<List<StellplatzMitDetails>> =
         basisDaten.map { liste ->
             liste.map { (stellplatz, adresse, bewertungInfo) ->
                 StellplatzMitDetails(
@@ -87,7 +103,7 @@ class SucheViewModel(
                         stellplatz.gps_lat.toDouble(), stellplatz.gps_lng.toDouble()
                     )
                 )
-            }
+            }.filter { it.entfernungMeter <= radiusMeter }
         }
 
     private fun haversineMeter(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Int {

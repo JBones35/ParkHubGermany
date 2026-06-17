@@ -9,16 +9,21 @@ import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.parkhub.app.data.AppDatabase
 import com.parkhub.app.model.PillTab
 import com.parkhub.app.ui.components.PillTabRow
 import com.parkhub.app.ui.components.suche.*
+import com.parkhub.app.ui.theme.Gray
 import org.osmdroid.util.GeoPoint
+import java.util.Calendar
 
 data class Sortierung(val label: String, val aufsteigend: Boolean)
 
@@ -42,9 +47,10 @@ fun SucheScreen(
     )
 ) {
     var ort by remember { mutableStateOf("") }
-    var ortLat by remember { mutableStateOf(49.0069) }
-    var ortLng by remember { mutableStateOf(8.4037) }
+    var ortLat by remember { mutableStateOf<Double?>(null) }
+    var ortLng by remember { mutableStateOf<Double?>(null) }
     var datum by remember { mutableStateOf("") }
+    var datumMillis by remember { mutableStateOf<Long?>(null) }
     var uhrzeitStart by remember { mutableStateOf("") }
     var uhrzeitEnd by remember { mutableStateOf("") }
     var selectedView by remember { mutableStateOf(0) }
@@ -58,8 +64,57 @@ fun SucheScreen(
     var showFehler by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val stellplaetzeListe by viewModel.stellplaetzeMitEntfernung(ortLat, ortLng)
-        .collectAsState(initial = emptyList())
+    val datePickerState = rememberDatePickerState()
+    var startHour by remember { mutableStateOf(9) }
+    var startMinute by remember { mutableStateOf(0) }
+    var endHour by remember { mutableStateOf(11) }
+    var endMinute by remember { mutableStateOf(0) }
+
+    // Suche ist erst vollständig wenn Ort, Datum und beide Uhrzeiten gesetzt sind
+    val sucheVollstaendig = ortLat != null && ortLng != null &&
+            datumMillis != null && uhrzeitStart.isNotEmpty() && uhrzeitEnd.isNotEmpty()
+
+    // Suchzeitraum aus Datum + Uhrzeit kombinieren
+    val suchVon = remember(datumMillis, startHour, startMinute) {
+        datumMillis?.let { basis ->
+            Calendar.getInstance().apply {
+                timeInMillis = basis
+                set(Calendar.HOUR_OF_DAY, startHour)
+                set(Calendar.MINUTE, startMinute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+        }
+    }
+    val suchBis = remember(datumMillis, endHour, endMinute) {
+        datumMillis?.let { basis ->
+            Calendar.getInstance().apply {
+                timeInMillis = basis
+                set(Calendar.HOUR_OF_DAY, endHour)
+                set(Calendar.MINUTE, endMinute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+        }
+    }
+
+    LaunchedEffect(sucheVollstaendig, suchVon, suchBis, ortLat, ortLng, selectedFahrzeugTyp) {
+        if (sucheVollstaendig && suchVon != null && suchBis != null) {
+            viewModel.updateFilter(
+                viewModel.filter.value.copy(
+                    von = suchVon,
+                    bis = suchBis
+                )
+            )
+        }
+    }
+
+    val stellplaetzeListe by if (sucheVollstaendig && ortLat != null && ortLng != null) {
+        viewModel.stellplaetzeMitEntfernung(ortLat!!, ortLng!!)
+            .collectAsState(initial = emptyList())
+    } else {
+        remember { mutableStateOf(emptyList()) }
+    }
 
     val sortierteListe by remember(selectedSortierung, stellplaetzeListe) {
         derivedStateOf {
@@ -73,12 +128,6 @@ fun SucheScreen(
         }
     }
     val fahrzeugTypenListe by viewModel.fahrzeugTypListeFlow.collectAsState(initial = emptyList())
-
-    val datePickerState = rememberDatePickerState()
-    var startHour by remember { mutableStateOf(9) }
-    var startMinute by remember { mutableStateOf(0) }
-    var endHour by remember { mutableStateOf(11) }
-    var endMinute by remember { mutableStateOf(0) }
 
     val markers = sortierteListe.map { details ->
         Pair(
@@ -109,6 +158,7 @@ fun SucheScreen(
         onConfirm = { millis ->
             val sdf = java.text.SimpleDateFormat("d. MMM", java.util.Locale.GERMAN)
             datum = sdf.format(java.util.Date(millis))
+            datumMillis = millis
             showDatePicker = false
         }
     )
@@ -203,52 +253,69 @@ fun SucheScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            item {
-                PillTabRow(
-                    tabs = tabs,
-                    selectedTab = selectedView,
-                    onTabSelected = { selectedView = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            item {
-                SucheErgebnisHeader(
-                    anzahl = sortierteListe.size,
-                    showSortieren = showSortieren,
-                    onSortierenClick = { showSortieren = true },
-                    onSortierenDismiss = { showSortieren = false },
-                    selectedSortierung = selectedSortierung,
-                    onSortierungSelected = {
-                        selectedSortierung = it
-                        showSortieren = false
-                    }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            if (selectedView == 0) {
+            if (!sucheVollstaendig) {
                 item {
-                    OsmMapView(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(220.dp)
-                            .clip(RoundedCornerShape(12.dp)),
-                        latitude = ortLat,
-                        longitude = ortLng,
-                        markers = markers
+                            .padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Bitte Ort, Datum und Zeit auswählen",
+                            fontSize = 14.sp,
+                            color = Gray
+                        )
+                    }
+                }
+            } else {
+                item {
+                    PillTabRow(
+                        tabs = tabs,
+                        selectedTab = selectedView,
+                        onTabSelected = { selectedView = it },
+                        modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
-            }
 
-            items(items = sortierteListe, key = { it.stellplatz.id }) { details ->
-                StellplatzListeItem(
-                    stellplatz = details,
-                    onClick = { }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                item {
+                    SucheErgebnisHeader(
+                        anzahl = sortierteListe.size,
+                        showSortieren = showSortieren,
+                        onSortierenClick = { showSortieren = true },
+                        onSortierenDismiss = { showSortieren = false },
+                        selectedSortierung = selectedSortierung,
+                        onSortierungSelected = {
+                            selectedSortierung = it
+                            showSortieren = false
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                if (selectedView == 0) {
+                    item {
+                        OsmMapView(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(220.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            latitude = ortLat ?: 49.0069,
+                            longitude = ortLng ?: 8.4037,
+                            markers = markers
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+
+                items(items = sortierteListe, key = { it.stellplatz.id }) { details ->
+                    StellplatzListeItem(
+                        stellplatz = details,
+                        onClick = { }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
         }
     }

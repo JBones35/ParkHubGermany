@@ -1,6 +1,27 @@
 package com.parkhub.app.model
 
+import java.util.Calendar
 import java.util.UUID
+
+// ===== HILFSFUNKTION FÜR RELATIVE ZEITSTEMPEL =====
+private fun heuteUm(stunde: Int, minute: Int = 0): Long {
+    val cal = Calendar.getInstance()
+    cal.set(Calendar.HOUR_OF_DAY, stunde)
+    cal.set(Calendar.MINUTE, minute)
+    cal.set(Calendar.SECOND, 0)
+    cal.set(Calendar.MILLISECOND, 0)
+    return cal.timeInMillis
+}
+
+private fun inTagenUm(tage: Int, stunde: Int, minute: Int = 0): Long {
+    val cal = Calendar.getInstance()
+    cal.add(Calendar.DAY_OF_MONTH, tage)
+    cal.set(Calendar.HOUR_OF_DAY, stunde)
+    cal.set(Calendar.MINUTE, minute)
+    cal.set(Calendar.SECOND, 0)
+    cal.set(Calendar.MILLISECOND, 0)
+    return cal.timeInMillis
+}
 
 // ===== FAHRZEUGTYP =====
 val sprinter = FahrzeugTyp(UUID.fromString("a1000000-0000-0000-0000-000000000001"), "Mercedes Sprinter", 200f, 540f, 210f, "3,5 t")
@@ -45,23 +66,23 @@ val adresseListe = listOf(adresse1, adresse2, adresse3, adresse4, adresse5)
 // ===== STELLPLATZ =====
 val stellplatz1 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000001"), "Familie Becker", adresse1.id,
-    250f, 600f, 220f, 3.40f, StellplatzStatus.FREI, 49.0069f, 8.4037f
+    250f, 600f, 220f, 3.40f, 49.0069f, 8.4037f
 )
 val stellplatz2 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000002"), "Thomas Reiner", adresse2.id,
-    240f, 580f, 215f, 4.20f, StellplatzStatus.BELEGT, 49.0089f, 8.4010f
+    240f, 580f, 215f, 4.20f, 49.0089f, 8.4010f
 )
 val stellplatz3 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000003"), "Sabine Klein", adresse3.id,
-    230f, 560f, 210f, 2.80f, StellplatzStatus.FREI, 49.0050f, 8.4060f
+    230f, 560f, 210f, 2.80f, 49.0050f, 8.4060f
 )
 val stellplatz4 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000004"), "Michael Vogt", adresse4.id,
-    260f, 620f, 225f, 3.80f, StellplatzStatus.RESERVIERT, 49.0030f, 8.4090f
+    260f, 620f, 225f, 3.80f, 49.0030f, 8.4090f
 )
 val stellplatz5 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000005"), "Familie Krüger", adresse5.id,
-    255f, 610f, 218f, 5.20f, StellplatzStatus.FREI, 49.0110f, 8.4005f
+    255f, 610f, 218f, 5.20f, 49.0110f, 8.4005f
 )
 
 val stellplatzListe = listOf(stellplatz1, stellplatz2, stellplatz3, stellplatz4, stellplatz5)
@@ -78,15 +99,15 @@ val stellplatzFahrzeugtypListe = listOf(
     StellplatzFahrzeugtyp(stellplatz5.id, transit.id),
 )
 
-// ===== SPERRZEIT =====
+// ===== SPERRZEIT (heute 14:00–15:00 Uhr) =====
 val sperrzeit1 = Sperrzeit(
     UUID.fromString("a6000000-0000-0000-0000-000000000001"), stellplatz1.id,
-    von = 1747008000000L, bis = 1747022400000L,
+    von = heuteUm(14, 0), bis = heuteUm(15, 0),
     grund = "Wartungsarbeiten am Stellplatz"
 )
 val sperrzeit2 = Sperrzeit(
     UUID.fromString("a6000000-0000-0000-0000-000000000002"), stellplatz3.id,
-    von = 1747094400000L, bis = 1747108800000L,
+    von = heuteUm(14, 0), bis = heuteUm(15, 0),
     grund = "Vermieter im Urlaub"
 )
 
@@ -98,15 +119,15 @@ val logistikId2 = UUID.fromString("a7000000-0000-0000-0000-000000000002")
 
 val buchung1 = Buchung(
     UUID.fromString("a8000000-0000-0000-0000-000000000001"), stellplatz2.id, logistikId1, fahrzeug1.id,
-    von = 1747130400000L, bis = 1747141200000L, status = BuchungStatus.AKTIV
+    von = inTagenUm(1, 9, 0), bis = inTagenUm(1, 11, 0), status = BuchungStatus.AKTIV
 )
 val buchung2 = Buchung(
     UUID.fromString("a8000000-0000-0000-0000-000000000002"), stellplatz4.id, logistikId2, fahrzeug2.id,
-    von = 1746957600000L, bis = 1746968400000L, status = BuchungStatus.ABGESCHLOSSEN
+    von = inTagenUm(-1, 9, 0), bis = inTagenUm(-1, 11, 0), status = BuchungStatus.ABGESCHLOSSEN
 )
 val buchung3 = Buchung(
     UUID.fromString("a8000000-0000-0000-0000-000000000003"), stellplatz1.id, logistikId1, fahrzeug3.id,
-    von = 1747216800000L, bis = 1747227600000L, status = BuchungStatus.AKTIV
+    von = inTagenUm(2, 9, 0), bis = inTagenUm(2, 11, 0), status = BuchungStatus.AKTIV
 )
 
 val buchungListe = listOf(buchung1, buchung2, buchung3)
@@ -114,28 +135,28 @@ val buchungListe = listOf(buchung1, buchung2, buchung3)
 // ===== BEWERTUNG =====
 val bewertung1 = Bewertung(
     UUID.fromString("a9000000-0000-0000-0000-000000000001"), stellplatz1.id, fahrer1.id,
-    sterne = 5, kommentar = "Sehr zugänglich, viel Platz", erstelltAm = 1747000000000L
+    sterne = 5, kommentar = "Sehr zugänglich, viel Platz", erstelltAm = inTagenUm(-7, 10, 0)
 )
 val bewertung2 = Bewertung(
     UUID.fromString("a9000000-0000-0000-0000-000000000002"), stellplatz2.id, fahrer2.id,
-    sterne = 4, kommentar = "Gute Lage, etwas eng beim Einparken", erstelltAm = 1747010000000L
+    sterne = 4, kommentar = "Gute Lage, etwas eng beim Einparken", erstelltAm = inTagenUm(-5, 10, 0)
 )
 val bewertung3 = Bewertung(
     UUID.fromString("a9000000-0000-0000-0000-000000000003"), stellplatz3.id, fahrer3.id,
-    sterne = 5, kommentar = "Top Vermieter, schnelle Kommunikation", erstelltAm = 1747020000000L
+    sterne = 5, kommentar = "Top Vermieter, schnelle Kommunikation", erstelltAm = inTagenUm(-3, 10, 0)
 )
 
 val bewertungListe = listOf(bewertung1, bewertung2, bewertung3)
 
 // ===== FAHRERZUWEISUNG =====
 val fahrerzuweisung1 = Fahrerzuweisung(
-    UUID.fromString("aa000000-0000-0000-0000-000000000001"), buchung1.id, fahrer1.id, zugewiesenAm = 1747125000000L
+    UUID.fromString("aa000000-0000-0000-0000-000000000001"), buchung1.id, fahrer1.id, zugewiesenAm = inTagenUm(0, 18, 0)
 )
 val fahrerzuweisung2 = Fahrerzuweisung(
-    UUID.fromString("aa000000-0000-0000-0000-000000000002"), buchung2.id, fahrer2.id, zugewiesenAm = 1746950000000L
+    UUID.fromString("aa000000-0000-0000-0000-000000000002"), buchung2.id, fahrer2.id, zugewiesenAm = inTagenUm(-2, 18, 0)
 )
 val fahrerzuweisung3 = Fahrerzuweisung(
-    UUID.fromString("aa000000-0000-0000-0000-000000000003"), buchung3.id, fahrer9.id, zugewiesenAm = 1747210000000L
+    UUID.fromString("aa000000-0000-0000-0000-000000000003"), buchung3.id, fahrer9.id, zugewiesenAm = inTagenUm(1, 18, 0)
 )
 
 val fahrerzuweisungListe = listOf(fahrerzuweisung1, fahrerzuweisung2, fahrerzuweisung3)
