@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun SucheTitelRow() {
+fun SucheTitelRow(onFilterClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -26,10 +26,12 @@ fun SucheTitelRow() {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
         )
-        Icon(
-            imageVector = Icons.Outlined.Tune,
-            contentDescription = "Filter",
-            tint = MaterialTheme.colorScheme.onBackground
-        )
+        IconButton(onClick = onFilterClick) {
+            Icon(
+                imageVector = Icons.Outlined.Tune,
+                contentDescription = "Filter",
+                tint = MaterialTheme.colorScheme.onBackground
+            )
+        }
     }
 }

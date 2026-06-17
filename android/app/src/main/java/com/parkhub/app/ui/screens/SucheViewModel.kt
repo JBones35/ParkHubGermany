@@ -2,7 +2,6 @@ package com.parkhub.app.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
 import com.parkhub.app.data.AdresseDao
 import com.parkhub.app.data.BewertungDao
 import com.parkhub.app.data.FahrzeugTypDao
@@ -10,30 +9,28 @@ import com.parkhub.app.data.StellplatzDao
 import com.parkhub.app.model.Adresse
 import com.parkhub.app.model.FahrzeugTyp
 import com.parkhub.app.model.Stellplatz
-import com.parkhub.app.model.adresseListe
-import com.parkhub.app.model.bewertungListe
-import com.parkhub.app.model.fahrzeugTypListe
-import com.parkhub.app.model.stellplatzListe
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.max
 import kotlin.math.sin
 import kotlin.math.sqrt
 
 data class StellplatzFilter(
+    val minLaenge: Float = 300f,
+    val minHoehe: Float = 180f,
+    val minBreite: Float = 180f,
     val minPreis: Float = 2.0f,
     val maxPreis: Float = 8.0f,
     val minBewertung: Float = 0f,
     val fahrzeugTyp: FahrzeugTyp? = null,
     val von: Long = System.currentTimeMillis(),
-    val bis: Long = System.currentTimeMillis() + 2 * 60 * 60 * 1000 // +2h Default
+    val bis: Long = System.currentTimeMillis() + 2 * 60 * 60 * 1000
 )
 
 data class StellplatzMitDetails(
@@ -62,10 +59,14 @@ class SucheViewModel(
 
     private val gefilterteStellplaetze: Flow<List<Stellplatz>> =
         _filter.flatMapLatest { f ->
+            val effektiveMinLaenge = max(f.minLaenge, f.fahrzeugTyp?.laenge_cm ?: 0f)
+            val effektiveMinBreite = max(f.minBreite, f.fahrzeugTyp?.breite_cm ?: 0f)
+            val effektiveMinHoehe = max(f.minHoehe, f.fahrzeugTyp?.hoehe_cm ?: 0f)
+
             stellplatzDao.getGefiltert(
-                minFahrzeugLaenge = f.fahrzeugTyp?.laenge_cm ?: 0f,
-                minFahrzeugBreite = f.fahrzeugTyp?.breite_cm ?: 0f,
-                minFahrzeugHoehe = f.fahrzeugTyp?.hoehe_cm ?: 0f,
+                minFahrzeugLaenge = effektiveMinLaenge,
+                minFahrzeugBreite = effektiveMinBreite,
+                minFahrzeugHoehe = effektiveMinHoehe,
                 minPreis = f.minPreis,
                 maxPreis = f.maxPreis,
                 minBewertung = f.minBewertung,

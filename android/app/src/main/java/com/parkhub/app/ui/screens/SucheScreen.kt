@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -49,10 +48,37 @@ fun SucheScreen(
     var ort by remember { mutableStateOf("") }
     var ortLat by remember { mutableStateOf<Double?>(null) }
     var ortLng by remember { mutableStateOf<Double?>(null) }
-    var datum by remember { mutableStateOf("") }
-    var datumMillis by remember { mutableStateOf<Long?>(null) }
-    var uhrzeitStart by remember { mutableStateOf("") }
-    var uhrzeitEnd by remember { mutableStateOf("") }
+    var datum by remember {
+        mutableStateOf(
+            java.text.SimpleDateFormat("d. MMM", java.util.Locale.GERMAN)
+                .format(java.util.Date())
+        )
+    }
+    var datumMillis by remember { mutableStateOf<Long?>(System.currentTimeMillis()) }
+
+    // Standardmäßig aufgerundete volle Stunde als Start, +1 Stunde als Ende
+    val jetzt = Calendar.getInstance()
+    val aktuelleMinute = jetzt.get(Calendar.MINUTE)
+    if (aktuelleMinute > 0) {
+        jetzt.add(Calendar.HOUR_OF_DAY, 1)
+    }
+    jetzt.set(Calendar.MINUTE, 0)
+    jetzt.set(Calendar.SECOND, 0)
+    jetzt.set(Calendar.MILLISECOND, 0)
+    val aufgerundeteStunde = jetzt.get(Calendar.HOUR_OF_DAY)
+
+    var startHour by remember { mutableStateOf(aufgerundeteStunde) }
+    var startMinute by remember { mutableStateOf(0) }
+    var endHour by remember { mutableStateOf((aufgerundeteStunde + 1) % 24) }
+    var endMinute by remember { mutableStateOf(0) }
+
+    var uhrzeitStart by remember {
+        mutableStateOf("%02d:%02d".format(aufgerundeteStunde, 0))
+    }
+    var uhrzeitEnd by remember {
+        mutableStateOf("%02d:%02d".format((aufgerundeteStunde + 1) % 24, 0))
+    }
+
     var selectedView by remember { mutableStateOf(0) }
     var dropdownExpanded by remember { mutableStateOf(false) }
     var selectedFahrzeugTyp by remember { mutableStateOf("Mercedes Sprinter") }
@@ -62,13 +88,14 @@ fun SucheScreen(
     var showSortieren by remember { mutableStateOf(false) }
     var selectedSortierung by remember { mutableStateOf(sortierOptionen[0]) }
     var showFehler by remember { mutableStateOf(false) }
+    var showFilterDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val datePickerState = rememberDatePickerState()
-    var startHour by remember { mutableStateOf(9) }
-    var startMinute by remember { mutableStateOf(0) }
-    var endHour by remember { mutableStateOf(11) }
-    var endMinute by remember { mutableStateOf(0) }
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = System.currentTimeMillis()
+    )
+
+    val aktuellerFilter by viewModel.filter.collectAsState()
 
     // Suche ist erst vollständig wenn Ort, Datum und beide Uhrzeiten gesetzt sind
     val sucheVollstaendig = ortLat != null && ortLng != null &&
@@ -203,6 +230,15 @@ fun SucheScreen(
             }
         }
     )
+
+    StellplatzFilterDialog(
+        show = showFilterDialog,
+        filter = aktuellerFilter,
+        ergebnisAnzahl = sortierteListe.size,
+        onFilterChange = { neuerFilter -> viewModel.updateFilter(neuerFilter) },
+        onDismiss = { showFilterDialog = false }
+    )
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
@@ -213,7 +249,7 @@ fun SucheScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            item { SucheTitelRow() }
+            item { SucheTitelRow(onFilterClick = { showFilterDialog = true }) }
 
             item {
                 OrtSucheField(
