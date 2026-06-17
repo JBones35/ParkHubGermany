@@ -11,16 +11,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.parkhub.app.data.AppDatabase
 import com.parkhub.app.model.PillTab
 import com.parkhub.app.ui.components.PillTabRow
 import com.parkhub.app.ui.components.suche.*
 import org.osmdroid.util.GeoPoint
-
-val fahrzeugTypen = listOf(
-    "Mercedes Sprinter", "VW Crafter",
-    "Ford Transit", "Iveco Daily", "MAN TGE"
-)
 
 data class Sortierung(val label: String, val aufsteigend: Boolean)
 
@@ -31,31 +29,18 @@ val sortierOptionen = listOf(
     Sortierung("Entfernung absteigend", false)
 )
 
-data class StellplatzVorschau(
-    val id: Int,
-    val name: String,
-    val entfernung: Int,
-    val preisProStunde: Double,
-    val bewertung: Float,
-    val anzahlBewertungen: Int
-) {
-    val entfernungText: String
-        get() = if (entfernung >= 1000)
-            "${String.format("%.1f", entfernung / 1000.0)} km"
-        else "$entfernung m"
-}
-
-val stellplatzVorschauListe = listOf(
-    StellplatzVorschau(1, "Hauptstraße 18", 350, 3.40, 4.8f, 38),
-    StellplatzVorschau(2, "Kaiserstraße 142", 520, 4.20, 4.5f, 21),
-    StellplatzVorschau(3, "Sophienstraße 25", 780, 2.80, 4.2f, 15),
-    StellplatzVorschau(4, "Yorckstraße 33", 1100, 3.80, 4.6f, 29),
-    StellplatzVorschau(5, "Erbprinzenstraße 7", 1400, 5.20, 4.9f, 44),
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SucheScreen() {
+fun SucheScreen(
+    viewModel: SucheViewModel = viewModel(
+        factory = SucheViewModelFactory(
+            stellplatzDao = AppDatabase.getDatabase(LocalContext.current).stellplatzDao(),
+            adresseDao = AppDatabase.getDatabase(LocalContext.current).adresseDao(),
+            bewertungDao = AppDatabase.getDatabase(LocalContext.current).bewertungDao(),
+            fahrzeugTypDao = AppDatabase.getDatabase(LocalContext.current).fahrzeugTypDao()
+        )
+    )
+) {
     var ort by remember { mutableStateOf("") }
     var ortLat by remember { mutableStateOf(49.0069) }
     var ortLng by remember { mutableStateOf(8.4037) }
@@ -73,17 +58,21 @@ fun SucheScreen() {
     var showFehler by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val sortierteListe by remember(selectedSortierung) {
+    val stellplaetzeListe by viewModel.stellplaetzeMitEntfernung(ortLat, ortLng)
+        .collectAsState(initial = emptyList())
+
+    val sortierteListe by remember(selectedSortierung, stellplaetzeListe) {
         derivedStateOf {
             when (selectedSortierung.label) {
-                "Preis aufsteigend" -> stellplatzVorschauListe.sortedBy { it.preisProStunde }
-                "Preis absteigend" -> stellplatzVorschauListe.sortedByDescending { it.preisProStunde }
-                "Entfernung aufsteigend" -> stellplatzVorschauListe.sortedBy { it.entfernung }
-                "Entfernung absteigend" -> stellplatzVorschauListe.sortedByDescending { it.entfernung }
-                else -> stellplatzVorschauListe
+                "Preis aufsteigend" -> stellplaetzeListe.sortedBy { it.stellplatz.preis_stunde }
+                "Preis absteigend" -> stellplaetzeListe.sortedByDescending { it.stellplatz.preis_stunde }
+                "Entfernung aufsteigend" -> stellplaetzeListe.sortedBy { it.entfernungMeter }
+                "Entfernung absteigend" -> stellplaetzeListe.sortedByDescending { it.entfernungMeter }
+                else -> stellplaetzeListe
             }
         }
     }
+    val fahrzeugTypenListe by viewModel.fahrzeugTypListeFlow.collectAsState(initial = emptyList())
 
     val datePickerState = rememberDatePickerState()
     var startHour by remember { mutableStateOf(9) }
@@ -91,18 +80,18 @@ fun SucheScreen() {
     var endHour by remember { mutableStateOf(11) }
     var endMinute by remember { mutableStateOf(0) }
 
-    val markers = listOf(
-        Pair(GeoPoint(49.0069, 8.4037), "3,40 €"),
-        Pair(GeoPoint(49.0089, 8.4010), "4,20 €"),
-        Pair(GeoPoint(49.0050, 8.4060), "2,80 €")
-    )
+    val markers = sortierteListe.map { details ->
+        Pair(
+            GeoPoint(details.stellplatz.gps_lat.toDouble(), details.stellplatz.gps_lng.toDouble()),
+            "${details.stellplatz.preis_stunde} €"
+        )
+    }
 
     val tabs = listOf(
         PillTab("Karte", Icons.Outlined.Map),
         PillTab("Liste", Icons.AutoMirrored.Outlined.FormatListBulleted)
     )
 
-    // Snackbar Fehler anzeigen
     LaunchedEffect(showFehler) {
         if (showFehler) {
             snackbarHostState.showSnackbar(
@@ -113,7 +102,6 @@ fun SucheScreen() {
         }
     }
 
-    // Dialoge
     SucheDatePickerDialog(
         show = showDatePicker,
         state = datePickerState,
@@ -210,7 +198,7 @@ fun SucheScreen() {
                         selectedFahrzeugTyp = it
                         dropdownExpanded = false
                     },
-                    fahrzeugTypen = fahrzeugTypen
+                    fahrzeugTypen = fahrzeugTypenListe.map { it.bezeichnung }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -255,9 +243,9 @@ fun SucheScreen() {
                 }
             }
 
-            items(items = sortierteListe, key = { it.id }) { stellplatz ->
+            items(items = sortierteListe, key = { it.stellplatz.id }) { details ->
                 StellplatzListeItem(
-                    stellplatz = stellplatz,
+                    stellplatz = details,
                     onClick = { }
                 )
                 Spacer(modifier = Modifier.height(8.dp))

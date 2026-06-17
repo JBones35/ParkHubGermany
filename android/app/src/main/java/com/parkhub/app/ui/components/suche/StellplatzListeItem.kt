@@ -6,11 +6,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.parkhub.app.ui.screens.StellplatzVorschau
+import com.parkhub.app.ui.screens.StellplatzMitDetails
 
 @Composable
 fun StellplatzListeItem(
-    stellplatz: StellplatzVorschau,
+    stellplatz: StellplatzMitDetails,
     onClick: () -> Unit
 ) {
     Card(

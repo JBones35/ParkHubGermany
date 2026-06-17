@@ -10,8 +10,8 @@ enum class FahrerStatus {
 }
 @Entity(tableName = "fahrer")
 data class Fahrer(
-    @PrimaryKey(autoGenerate = true)
-    val id: UUID,
+    @PrimaryKey
+    val id: UUID = UUID.randomUUID(),
     val vorname: String,
     val nachname: String,
     val lizenzNummer: String,
