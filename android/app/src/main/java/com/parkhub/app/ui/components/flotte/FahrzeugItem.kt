@@ -17,11 +17,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.parkhub.app.model.Fahrzeug
 import com.parkhub.app.model.FahrzeugStatus
+import com.parkhub.app.model.FahrzeugTyp
 import com.parkhub.app.ui.theme.Gray
 import com.parkhub.app.ui.theme.StatusWartung
 
 @Composable
-fun FahrzeugItem(fahrzeug: Fahrzeug, modifier: Modifier = Modifier) {
+fun FahrzeugItem(
+    fahrzeug: Fahrzeug,
+    fahrzeugTyp: FahrzeugTyp?,
+    modifier: Modifier = Modifier
+) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -29,7 +34,6 @@ fun FahrzeugItem(fahrzeug: Fahrzeug, modifier: Modifier = Modifier) {
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Fahrzeug Icon Box
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -52,7 +56,6 @@ fun FahrzeugItem(fahrzeug: Fahrzeug, modifier: Modifier = Modifier) {
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Kennzeichen + Modell
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = fahrzeug.kennzeichen,
@@ -61,13 +64,15 @@ fun FahrzeugItem(fahrzeug: Fahrzeug, modifier: Modifier = Modifier) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${fahrzeug.modell} · ${fahrzeug.gewicht}",
+                    text = if (fahrzeugTyp != null)
+                        "${fahrzeugTyp.bezeichnung} · ${fahrzeugTyp.gewicht}"
+                    else
+                        "Unbekannter Typ",
                     fontSize = 13.sp,
                     color = Gray
                 )
             }
 
-            // Status Badge auf der rechten Seite
             StatusBadge(status = fahrzeug.status)
         }
 

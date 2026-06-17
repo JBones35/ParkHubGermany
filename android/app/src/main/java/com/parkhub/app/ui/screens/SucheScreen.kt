@@ -4,12 +4,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.parkhub.app.model.tabs
+import com.parkhub.app.model.PillTab
+import com.parkhub.app.ui.components.PillTabRow
 import com.parkhub.app.ui.components.suche.*
 import org.osmdroid.util.GeoPoint
 
@@ -91,6 +95,11 @@ fun SucheScreen() {
         Pair(GeoPoint(49.0069, 8.4037), "3,40 €"),
         Pair(GeoPoint(49.0089, 8.4010), "4,20 €"),
         Pair(GeoPoint(49.0050, 8.4060), "2,80 €")
+    )
+
+    val tabs = listOf(
+        PillTab("Karte", Icons.Outlined.Map),
+        PillTab("Liste", Icons.AutoMirrored.Outlined.FormatListBulleted)
     )
 
     // Snackbar Fehler anzeigen
@@ -207,10 +216,11 @@ fun SucheScreen() {
             }
 
             item {
-                SucheTabRow(
+                PillTabRow(
                     tabs = tabs,
-                    selectedView = selectedView,
-                    onViewSelected = { selectedView = it }
+                    selectedTab = selectedView,
+                    onTabSelected = { selectedView = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }

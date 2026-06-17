@@ -25,29 +25,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.parkhub.app.model.PillTab
 import com.parkhub.app.ui.theme.Gray
 import com.parkhub.app.ui.theme.White
-
-data class PillTab(
-    val title: String,
-    val icon: ImageVector? = null
-)
 
 @Composable
 fun PillTabRow(
     tabs: List<PillTab>,
     selectedTab: Int,
     onTabSelected: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    padding: Dp = 0.dp
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = padding)
             .clip(RoundedCornerShape(30.dp))
             .background(Color(0xFFE8E8E8))
             .padding(4.dp)

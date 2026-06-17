@@ -7,13 +7,15 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.parkhub.app.model.Fahrer
 import com.parkhub.app.model.Fahrzeug
+import com.parkhub.app.model.FahrzeugTyp
 
-@Database(entities = [Fahrer::class, Fahrzeug::class], version = 3, exportSchema = false)
+@Database(entities = [Fahrer::class, Fahrzeug::class, FahrzeugTyp::class], version = 4, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun fahrerDao(): FahrerDao
     abstract fun fahrzeugDao(): FahrzeugDao
+    abstract fun fahrzeugTypDao(): FahrzeugTypDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

@@ -18,10 +18,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.parkhub.app.data.AppDatabase
 import com.parkhub.app.model.FahrerStatus
 import com.parkhub.app.model.FahrzeugStatus
-import com.parkhub.app.ui.components.PillTab
+import com.parkhub.app.model.PillTab
+import com.parkhub.app.ui.components.PillTabRow
 import com.parkhub.app.ui.components.flotte.FahrerItem
 import com.parkhub.app.ui.components.flotte.FahrzeugItem
-import com.parkhub.app.ui.components.PillTabRow
 import com.parkhub.app.ui.theme.*
 
 @Composable
@@ -29,7 +29,8 @@ fun FlotteScreen(
     viewModel: FlotteViewModel = viewModel(
         factory = FlotteViewModelFactory(
             fahrerDao = AppDatabase.getDatabase(LocalContext.current).fahrerDao(),
-            fahrzeugDao = AppDatabase.getDatabase(LocalContext.current).fahrzeugDao()
+            fahrzeugDao = AppDatabase.getDatabase(LocalContext.current).fahrzeugDao(),
+            fahrzeugTypDao = AppDatabase.getDatabase(LocalContext.current).fahrzeugTypDao()
         )
     )
 ) {
@@ -37,10 +38,10 @@ fun FlotteScreen(
     var selectedFilter by remember { mutableStateOf(0) }
 
     val fahrerListFromDb by viewModel.fahrerList.collectAsState(initial = emptyList())
-    val fahrzeugListFromDb by viewModel.fahrzeugList.collectAsState(initial = emptyList())
+    val fahrzeugMitTypListe by viewModel.fahrzeugMitTypListe.collectAsState(initial = emptyList())
 
     val tabs = listOf(
-        PillTab("Fahrzeuge (${fahrzeugListFromDb.size})"),
+        PillTab("Fahrzeuge (${fahrzeugMitTypListe.size})"),
         PillTab("Fahrer (${fahrerListFromDb.size})")
     )
 
@@ -50,9 +51,9 @@ fun FlotteScreen(
     val currentFilter = if (selectedTab == 0) fahrzeugFilter else fahrerFilter
 
     val gefilterteFahrzeugListe = when (selectedFilter) {
-        1 -> fahrzeugListFromDb.filter { it.status == FahrzeugStatus.AKTIV }
-        2 -> fahrzeugListFromDb.filter { it.status == FahrzeugStatus.WARTUNG }
-        else -> fahrzeugListFromDb
+        1 -> fahrzeugMitTypListe.filter { it.fahrzeug.status == FahrzeugStatus.AKTIV }
+        2 -> fahrzeugMitTypListe.filter { it.fahrzeug.status == FahrzeugStatus.WARTUNG }
+        else -> fahrzeugMitTypListe
     }
 
     val gefilterteFahrerliste = when (selectedFilter) {
@@ -92,7 +93,8 @@ fun FlotteScreen(
             PillTabRow(
                 tabs = tabs,
                 selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it }
+                onTabSelected = { selectedTab = it },
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -123,8 +125,11 @@ fun FlotteScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 when (selectedTab) {
-                    0 -> items(gefilterteFahrzeugListe) { fahrzeug ->
-                        FahrzeugItem(fahrzeug = fahrzeug)
+                    0 -> items(gefilterteFahrzeugListe) { fahrzeugMitTyp ->
+                        FahrzeugItem(
+                            fahrzeug = fahrzeugMitTyp.fahrzeug,
+                            fahrzeugTyp = fahrzeugMitTyp.typ
+                        )
                     }
                     1 -> items(gefilterteFahrerliste) { fahrer ->
                         FahrerItem(fahrer = fahrer)
