@@ -63,4 +63,5 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.datastore.preferences)
     ksp(libs.room.compiler)
+    testImplementation("junit:junit:4.13.2")
 }
