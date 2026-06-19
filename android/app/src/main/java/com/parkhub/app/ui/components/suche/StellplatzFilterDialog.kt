@@ -15,6 +15,9 @@ import com.parkhub.app.ui.theme.Gray
 import com.parkhub.app.ui.theme.ParkHubGreen
 import com.parkhub.app.ui.theme.White
 
+// Filter-BottomSheet für die Stellplatzsuche. Jede Änderung an einem
+// Slider oder Chip ruft sofort onFilterChange auf, sodass die Suche
+// live aktualisiert wird, während der Dialog noch offen ist.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StellplatzFilterDialog(
@@ -42,6 +45,8 @@ fun StellplatzFilterDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = "Filter", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                // Setzt nur die Filterwerte zurück, von/bis und Fahrzeugtyp
+                // bleiben erhalten, da sie zum Suchzeitraum gehören
                 Text(
                     text = "Zurücksetzen",
                     fontSize = 14.sp,
@@ -67,7 +72,6 @@ fun StellplatzFilterDialog(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ===== MINDESTLÄNGE =====
             Text(text = "Mindestlänge", fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(text = "3,0 m", fontSize = 12.sp, color = Gray)
@@ -90,7 +94,6 @@ fun StellplatzFilterDialog(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ===== MINDESTBREITE =====
             Text(text = "Mindestbreite", fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(text = "1,8 m", fontSize = 12.sp, color = Gray)
@@ -113,7 +116,6 @@ fun StellplatzFilterDialog(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ===== MINDESTHÖHE =====
             Text(text = "Mindesthöhe", fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(text = "1,8 m", fontSize = 12.sp, color = Gray)
@@ -136,7 +138,6 @@ fun StellplatzFilterDialog(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-// ===== PREIS PRO STUNDE =====
             Text(text = "Preis pro Stunde (€)", fontSize = 14.sp, fontWeight = FontWeight.Medium)
             RangeSlider(
                 value = filter.minPreis..filter.maxPreis,
@@ -161,7 +162,6 @@ fun StellplatzFilterDialog(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ===== MINDESTBEWERTUNG =====
             Text(text = "Mindestbewertung", fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

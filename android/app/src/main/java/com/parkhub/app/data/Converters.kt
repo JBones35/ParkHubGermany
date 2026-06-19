@@ -6,25 +6,6 @@ import java.util.UUID
 
 class Converters {
     @TypeConverter
-    fun fromFahrerStatus(value: String): FahrerStatus {
-        return FahrerStatus.valueOf(value)
-    }
-    @TypeConverter
-    fun fahrerStatusToString(status: FahrerStatus): String {
-        return status.name
-    }
-
-    @TypeConverter
-    fun fromFahrzeugStatus(status: FahrzeugStatus): String = status.name
-
-    @TypeConverter
-    fun toFahrzeugStatus(value: String): FahrzeugStatus = try {
-        FahrzeugStatus.valueOf(value)
-    } catch (e: Exception) {
-        FahrzeugStatus.FREI
-    }
-
-    @TypeConverter
     fun fromUUID(uuid: UUID): String = uuid.toString()
 
     @TypeConverter

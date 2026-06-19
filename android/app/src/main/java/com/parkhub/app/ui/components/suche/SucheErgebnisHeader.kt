@@ -11,6 +11,9 @@ import com.parkhub.app.ui.screens.Sortierung
 import com.parkhub.app.ui.screens.sortierOptionen
 import com.parkhub.app.ui.theme.*
 
+// Kopfzeile über den Suchergebnissen mit Treffer-Anzahl und einem
+// Dropdown-Menü für die Sortierung. Markiert die aktuell aktive
+// Sortier-Option farblich und fett.
 @Composable
 fun SucheErgebnisHeader(
     anzahl: Int,

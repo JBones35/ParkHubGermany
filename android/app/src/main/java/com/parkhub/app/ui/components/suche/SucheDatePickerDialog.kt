@@ -4,6 +4,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import com.parkhub.app.ui.theme.*
 
+// Dialog zur Datumsauswahl, eingebettet in Material3s DatePickerDialog.
+// Gibt das gewählte Datum als Millisekunden-Timestamp über onConfirm zurück.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SucheDatePickerDialog(

@@ -8,6 +8,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.parkhub.app.ui.screens.StellplatzMitDetails
 
+// Klickbare Karte für einen Stellplatz in der Listenansicht der Suche.
+// Der eigentliche Inhalt kommt aus StellplatzInfo, hier nur die
+// Card-Hülle mit Schatten und abgerundeten Ecken.
 @Composable
 fun StellplatzListeItem(
     stellplatz: StellplatzMitDetails,

@@ -17,6 +17,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Alignment
 import com.parkhub.app.ui.theme.ParkHubGreen
 
+// Zeigt die Kerndaten eines Stellplatzes an: Adresse, Entfernung,
+// Bewertung und Preis pro Stunde. Wird sowohl in der Listenansicht
+// als auch in der Detailansicht der Suche verwendet.
 @SuppressLint("DefaultLocale")
 @Composable
 fun StellplatzInfo(stellplatz: StellplatzMitDetails) {
@@ -63,6 +66,8 @@ fun StellplatzInfo(stellplatz: StellplatzMitDetails) {
     }
 }
 
+// Wandelt eine Entfernung in Metern in einen lesbaren Text um:
+// ab 1000 m wird auf Kilometer mit einer Nachkommastelle umgerechnet.
 @SuppressLint("DefaultLocale")
 fun Int.alsEntfernungText(): String = if (this >= 1000)
     "${String.format("%.1f", this / 1000.0)} km"

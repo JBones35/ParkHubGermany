@@ -15,6 +15,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.parkhub.app.ui.theme.ParkHubGreen
 
+// Titelzeile der Suche mit Überschrift und Filter-Icon. Solange ein
+// Filter aktiv ist (vom Standard abweicht), wird das Icon grün
+// eingefärbt und zusätzlich ein kleiner Punkt oben rechts angezeigt.
 @Composable
 fun SucheTitelRow(
     onFilterClick: () -> Unit,

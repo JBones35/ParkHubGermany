@@ -11,6 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.parkhub.app.ui.theme.*
 
+// Zeigt Datum sowie Start- und Endzeit als nicht editierbare, aber
+// klickbare Felder an. Ein Klick öffnet jeweils den entsprechenden
+// Picker-Dialog, die eigentliche Werteingabe passiert dort.
 @Composable
 fun SucheDatumZeitSection(
     datum: String,

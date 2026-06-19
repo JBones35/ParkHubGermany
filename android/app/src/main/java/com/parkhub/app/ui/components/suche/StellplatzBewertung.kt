@@ -15,6 +15,9 @@ import com.parkhub.app.ui.theme.Gray
 import com.parkhub.app.ui.theme.GrayBorder
 import com.parkhub.app.ui.theme.ParkHubGreen
 
+// Zeigt eine Bewertung als 5-Sterne-Reihe plus Zahlenwert und
+// Anzahl der Bewertungen an. Volle Sterne entsprechen dem
+// abgerundeten Bewertungswert (z.B. 4,7 zeigt 4 volle Sterne).
 @Composable
 fun StellplatzBewertung(
     bewertung: Float,

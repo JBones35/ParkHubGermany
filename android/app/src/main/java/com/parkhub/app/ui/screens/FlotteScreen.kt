@@ -24,6 +24,10 @@ import com.parkhub.app.ui.components.flotte.FahrerItem
 import com.parkhub.app.ui.components.flotte.FahrzeugItem
 import com.parkhub.app.ui.theme.*
 
+// Übersicht über Fahrzeuge und Fahrer mit Tabs, Status-Filtern und
+// Liste. Der Status beider Entitäten wird im ViewModel dynamisch aus
+// Buchungen und Ausfällen berechnet, daher läuft die Filterung hier
+// rein in Kotlin statt per Datenbank-Query.
 @Composable
 fun FlotteScreen(
     viewModel: FlotteViewModel = viewModel(
@@ -54,8 +58,6 @@ fun FlotteScreen(
 
     val currentFilter = if (selectedTab == 0) fahrzeugFilter else fahrerFilter
 
-    // Filterung läuft jetzt in Kotlin, da der Status erst zur Laufzeit
-    // berechnet wird und keine Spalte in der DB mehr ist.
     val gefilterteFahrzeugListe = when (selectedFilter) {
         1 -> fahrzeugMitStatusListe.filter { it.status == FahrzeugStatus.FREI }
         2 -> fahrzeugMitStatusListe.filter { it.status == FahrzeugStatus.BESETZT }
@@ -70,7 +72,8 @@ fun FlotteScreen(
         else -> fahrerMitStatusListe
     }
 
-    // Beim Tab-Wechsel den Filter wieder auf "Alle" zurücksetzen
+    // Beim Tab-Wechsel auf "Alle" zurücksetzen, da die Filter-Indizes
+    // zwischen Fahrzeug- und Fahrer-Tab unterschiedliche Bedeutung haben
     LaunchedEffect(selectedTab) {
         selectedFilter = 0
     }

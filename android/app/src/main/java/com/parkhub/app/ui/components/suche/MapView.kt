@@ -10,6 +10,10 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 
+// Zeigt eine osmdroid-Karte mit Markern an. Die factory-Lambda erzeugt
+// nur die leere Karte einmalig, der update-Block läuft bei jeder
+// Recomposition neu und setzt Mittelpunkt sowie Marker aktuell - so
+// reagiert die Karte automatisch auf Änderungen der markers-Liste.
 @Composable
 fun OsmMapView(
     modifier: Modifier = Modifier,
@@ -31,6 +35,7 @@ fun OsmMapView(
         update = { mapView ->
             mapView.controller.setCenter(GeoPoint(latitude, longitude))
 
+            // Alte Marker entfernen, bevor die aktuellen neu gesetzt werden
             mapView.overlays.removeAll { it is Marker }
 
             markers.forEach { (point, label) ->
@@ -39,6 +44,9 @@ fun OsmMapView(
                 marker.title = label
                 marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
 
+                // Beim Klick fährt die Karte so zum Marker, dass dieser
+                // etwas unterhalb der Bildschirmmitte liegt - damit die
+                // aufklappende Info-Bubble darüber genug Platz hat.
                 marker.setOnMarkerClickListener { clickedMarker, mv ->
                     val versatzPunkte = mv.projection.fromPixels(
                         0,

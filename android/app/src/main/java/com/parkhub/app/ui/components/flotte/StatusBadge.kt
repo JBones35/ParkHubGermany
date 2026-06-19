@@ -16,6 +16,8 @@ import com.parkhub.app.ui.theme.StatusAktiv
 import com.parkhub.app.ui.theme.StatusWartung
 import com.parkhub.app.ui.theme.StatusBesetzt
 
+// Kompaktes, abgerundetes Badge mit Punkt-Symbol, Label und farblicher
+// Kennzeichnung je nach Fahrzeug-Status. Wird in FahrzeugItem verwendet.
 @Composable
 fun StatusBadge(status: FahrzeugStatus, modifier: Modifier = Modifier) {
     val (text, color) = when (status) {

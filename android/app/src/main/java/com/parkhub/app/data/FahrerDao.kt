@@ -12,9 +12,6 @@ interface FahrerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(liste: List<Fahrer>)
 
-    @Update
-    suspend fun update(fahrer: Fahrer): Int
-
     @Delete
     suspend fun delete(fahrer: Fahrer): Int
 }

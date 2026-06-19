@@ -10,6 +10,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import com.parkhub.app.ui.theme.*
 
+// Ausklappbares Dropdown zur Auswahl des Fahrzeugtyps für die Suche.
+// Der ausgewählte Typ wird im zugehörigen DropdownMenuItem farblich
+// hervorgehoben.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SucheFahrzeugDropdown(

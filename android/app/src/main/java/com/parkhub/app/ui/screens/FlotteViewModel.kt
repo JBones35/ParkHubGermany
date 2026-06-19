@@ -7,17 +7,23 @@ import com.parkhub.app.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
+// Kombiniert einen Fahrer mit seinem zur Laufzeit berechneten Status.
 data class FahrerMitStatus(
     val fahrer: Fahrer,
     val status: FahrerStatus
 )
 
+// Kombiniert ein Fahrzeug mit seinem Typ und zur Laufzeit berechneten Status.
 data class FahrzeugMitStatus(
     val fahrzeug: Fahrzeug,
     val typ: FahrzeugTyp?,
     val status: FahrzeugStatus
 )
 
+// Berechnet den aktuellen Status von Fahrern und Fahrzeugen dynamisch
+// aus Buchungen, Fahrerzuweisungen und Ausfällen, statt ihn als
+// statisches Feld zu speichern. So gibt es nur eine Quelle der Wahrheit,
+// die nicht mit dem tatsächlichen Buchungsstand auseinanderlaufen kann.
 class FlotteViewModel(
     private val fahrerDao: FahrerDao,
     private val fahrzeugDao: FahrzeugDao,
@@ -64,7 +70,7 @@ class FlotteViewModel(
 
     // Fahrzeug-Status: WARTUNG wenn aktueller Ausfall läuft,
     // sonst BESETZT wenn aktuell eine aktive Buchung läuft,
-    // sonst AKTIV.
+    // sonst FREI.
     val fahrzeugMitStatusListe: Flow<List<FahrzeugMitStatus>> = combine(
         fahrzeugDao.getAllFahrzeug(),
         fahrzeugTypDao.getAll(),

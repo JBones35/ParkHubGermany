@@ -14,5 +14,3 @@ data class Adresse(
     val ort: String,
     val land: String = "Deutschland"
 )
-
-fun Adresse.vollständig(): String = "$strasse $hausnummer, $plz $ort"

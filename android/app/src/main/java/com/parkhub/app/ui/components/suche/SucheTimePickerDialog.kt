@@ -18,6 +18,9 @@ val stundenOptionen = (0..23).toList()
 val minutenOptionen = listOf(0, 30)
 val minutenLabels = mapOf(0 to ":00", 30 to ":30")
 
+// Dialog zur Uhrzeitauswahl über ein Stunden-Dropdown und Minuten-Chips
+// (volle und halbe Stunde). Zeigt die aktuelle Auswahl groß über den
+// Eingabeelementen an.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SucheTimePickerDialog(
@@ -49,7 +52,6 @@ fun SucheTimePickerDialog(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Aktuelle Auswahl anzeigen
                 Text(
                     text = "%02d:%02d".format(selectedHour, selectedMinute),
                     fontSize = 36.sp,
@@ -59,65 +61,57 @@ fun SucheTimePickerDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Stunden Dropdown
-                var stundeExpanded = false
+                var expandedStunde by androidx.compose.runtime.remember {
+                    androidx.compose.runtime.mutableStateOf(false)
+                }
                 ExposedDropdownMenuBox(
-                    expanded = false,
-                    onExpandedChange = {}
+                    expanded = expandedStunde,
+                    onExpandedChange = { expandedStunde = it }
                 ) {
-                    var expandedStunde by androidx.compose.runtime.remember {
-                        androidx.compose.runtime.mutableStateOf(false)
-                    }
-                    ExposedDropdownMenuBox(
-                        expanded = expandedStunde,
-                        onExpandedChange = { expandedStunde = it }
-                    ) {
-                        OutlinedTextField(
-                            value = "%02d Uhr".format(selectedHour),
-                            onValueChange = {},
-                            readOnly = true,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(),
-                            label = { Text("Stunde") },
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedStunde)
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = ParkHubGreen,
-                                focusedLabelColor = ParkHubGreen
-                            )
+                    OutlinedTextField(
+                        value = "%02d Uhr".format(selectedHour),
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        label = { Text("Stunde") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedStunde)
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ParkHubGreen,
+                            focusedLabelColor = ParkHubGreen
                         )
-                        ExposedDropdownMenu(
-                            expanded = expandedStunde,
-                            onDismissRequest = { expandedStunde = false }
-                        ) {
-                            stundenOptionen.forEach { stunde ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            text = "%02d Uhr".format(stunde),
-                                            color = if (selectedHour == stunde)
-                                                ParkHubGreen
-                                            else MaterialTheme.colorScheme.onSurface,
-                                            fontWeight = if (selectedHour == stunde)
-                                                FontWeight.Bold else FontWeight.Normal
-                                        )
-                                    },
-                                    onClick = {
-                                        onHourSelected(stunde)
-                                        expandedStunde = false
-                                    }
-                                )
-                            }
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expandedStunde,
+                        onDismissRequest = { expandedStunde = false }
+                    ) {
+                        stundenOptionen.forEach { stunde ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = "%02d Uhr".format(stunde),
+                                        color = if (selectedHour == stunde)
+                                            ParkHubGreen
+                                        else MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = if (selectedHour == stunde)
+                                            FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                onClick = {
+                                    onHourSelected(stunde)
+                                    expandedStunde = false
+                                }
+                            )
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Minuten als 4 Chips
                 Text(
                     text = "Minute",
                     fontSize = 12.sp,

@@ -20,6 +20,9 @@ import com.parkhub.app.model.FahrerStatus
 import com.parkhub.app.ui.theme.Gray
 import com.parkhub.app.ui.theme.StatusBesetzt
 
+// Zeigt einen Fahrer mit Icon, Name, Lizenznummer und Status-Badge an.
+// Der Status wird von außen übergeben, da er zur Laufzeit aus Buchungen
+// und Ausfällen berechnet wird und keine feste Eigenschaft des Fahrers ist.
 @Composable
 fun FahrerItem(
     fahrer: Fahrer,
@@ -33,7 +36,7 @@ fun FahrerItem(
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Fahrer Icon Box
+            // Icon-Hintergrund passt sich farblich dem aktuellen Status an
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -62,7 +65,6 @@ fun FahrerItem(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Name + Lizenz
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = fahrer.vorname + " " + fahrer.nachname,
@@ -77,7 +79,6 @@ fun FahrerItem(
                 )
             }
 
-            // Status Badge auf der rechten Seite
             FahrerStatusBadge(status = status)
         }
 
@@ -89,6 +90,7 @@ fun FahrerItem(
     }
 }
 
+// Kompaktes Badge mit Hintergrundfarbe, Textfarbe und Label je nach Status.
 @Composable
 fun FahrerStatusBadge(status: FahrerStatus) {
     val (backgroundColor, textColor, label) = when (status) {

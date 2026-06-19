@@ -23,6 +23,9 @@ import com.parkhub.app.ui.theme.Gray
 import com.parkhub.app.ui.theme.StatusWartung
 import com.parkhub.app.ui.theme.StatusBesetzt
 
+// Zeigt ein Fahrzeug mit Icon, Kennzeichen, Typ und Status-Badge an.
+// Der Status wird von außen übergeben, da er zur Laufzeit aus Buchungen
+// und Ausfällen berechnet wird und keine feste Eigenschaft des Fahrzeugs ist.
 @Composable
 fun FahrzeugItem(
     fahrzeug: Fahrzeug,
@@ -37,6 +40,7 @@ fun FahrzeugItem(
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Icon-Hintergrund passt sich farblich dem aktuellen Status an
             Box(
                 modifier = Modifier
                     .size(44.dp)

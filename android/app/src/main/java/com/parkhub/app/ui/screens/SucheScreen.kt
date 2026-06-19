@@ -27,25 +27,27 @@ import com.parkhub.app.ui.theme.Gray
 import org.osmdroid.util.GeoPoint
 import java.util.Calendar
 
-data class Sortierung(val label: String, val aufsteigend: Boolean)
-
-val sortierOptionen = listOf(
-    Sortierung("Preis aufsteigend", true),
-    Sortierung("Preis absteigend", false),
-    Sortierung("Entfernung aufsteigend", true),
-    Sortierung("Entfernung absteigend", false)
-)
-
-private fun aufMitternachtSetzen(millis: Long): Long {
-    return Calendar.getInstance().apply {
-        timeInMillis = millis
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
-}
-
+/**
+ * Haupt-Screen für die Stellplatzsuche.
+ *
+ * Funktionsweise: Der Nutzer wählt einen Ort, ein Datum, einen
+ * Zeitraum und optional einen Fahrzeugtyp. Erst wenn alle drei
+ * Pflichtangaben (Ort, Datum, Zeitraum) vollständig sind
+ * ([sucheVollstaendig]), werden sie zu einem konkreten Suchzeitraum
+ * kombiniert und an das [SucheViewModel] weitergereicht. Das ViewModel
+ * lädt daraufhin reaktiv passende Stellplätze aus der Datenbank,
+ * inklusive Entfernungsberechnung zum gewählten Ort.
+ *
+ * Die Ergebnisse lassen sich zwischen Karten- und Listenansicht
+ * umschalten, nach Preis oder Entfernung sortieren, und über ein
+ * Filter-BottomSheet weiter einschränken (Mindestmaße, Preisspanne,
+ * Mindestbewertung).
+ *
+ * Validierung von Datum und Uhrzeit (keine Werte in der Vergangenheit,
+ * Start vor Ende) ist in eigene Dialog-Komponenten in
+ * [com.parkhub.app.ui.components.suche] ausgelagert, siehe
+ * SucheDatumDialog, SucheStartzeitDialog und SucheEndzeitDialog.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SucheScreen(
@@ -58,9 +60,18 @@ fun SucheScreen(
         )
     )
 ) {
+    // ===== ORT =====
+    // ortLat/ortLng bleiben null, bis der Nutzer aktiv einen Ort
+    // ausgewählt hat (manuell aus der Vorschlagsliste oder per
+    // automatischer Standorterkennung in OrtSucheField).
     var ort by remember { mutableStateOf("") }
     var ortLat by remember { mutableStateOf<Double?>(null) }
     var ortLng by remember { mutableStateOf<Double?>(null) }
+
+    // ===== DATUM =====
+    // Standardmäßig auf "heute" vorausgefüllt: datum ist der
+    // formatierte Anzeigetext, datumMillis der auf Mitternacht
+    // normalisierte Timestamp für Berechnungen.
     var datum by remember {
         mutableStateOf(
             java.text.SimpleDateFormat("d. MMM", java.util.Locale.GERMAN)
@@ -69,6 +80,11 @@ fun SucheScreen(
     }
     var datumMillis by remember { mutableStateOf<Long?>(aufMitternachtSetzen(System.currentTimeMillis())) }
 
+    // ===== STANDARD-UHRZEIT BERECHNEN =====
+    // Die Startzeit wird auf die nächste volle Stunde aufgerundet,
+    // z. B. 14:23 Uhr -> Start 15:00 Uhr. Steht die Uhr bereits exakt
+    // auf einer vollen Stunde, bleibt sie unverändert. Die Endzeit ist
+    // standardmäßig eine Stunde später als die Startzeit.
     val jetzt = Calendar.getInstance()
     val aktuelleMinute = jetzt.get(Calendar.MINUTE)
     if (aktuelleMinute > 0) {
@@ -81,6 +97,7 @@ fun SucheScreen(
 
     var startHour by remember { mutableStateOf(aufgerundeteStunde) }
     var startMinute by remember { mutableStateOf(0) }
+    // % 24 verhindert eine ungültige Stunde 24, falls aufgerundeteStunde = 23 ist
     var endHour by remember { mutableStateOf((aufgerundeteStunde + 1) % 24) }
     var endMinute by remember { mutableStateOf(0) }
 
@@ -91,7 +108,8 @@ fun SucheScreen(
         mutableStateOf("%02d:%02d".format((aufgerundeteStunde + 1) % 24, 0))
     }
 
-    var selectedView by remember { mutableStateOf(0) }
+    // ===== SONSTIGER UI-ZUSTAND =====
+    var selectedView by remember { mutableStateOf(0) } // 0 = Karte, 1 = Liste
     var dropdownExpanded by remember { mutableStateOf(false) }
     var selectedFahrzeugTyp by remember { mutableStateOf("Mercedes Sprinter") }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -108,8 +126,13 @@ fun SucheScreen(
         initialSelectedDateMillis = System.currentTimeMillis()
     )
 
+    // Aktueller Filter-Zustand kommt reaktiv aus dem ViewModel. Jede
+    // Änderung hier löst automatisch eine neue, gefilterte DB-Query aus.
     val aktuellerFilter by viewModel.filter.collectAsState()
 
+    // Prüft, ob der Filter noch auf den Werkseinstellungen steht. Wird
+    // genutzt, um das Filter-Icon und einen kleinen Punkt grün
+    // einzufärben, sobald irgendein Wert vom Standard abweicht.
     val filterIstStandard = remember(aktuellerFilter) {
         aktuellerFilter.minLaenge == 300f &&
                 aktuellerFilter.minBreite == 180f &&
@@ -119,9 +142,14 @@ fun SucheScreen(
                 aktuellerFilter.minBewertung == 0f
     }
 
+    // Die Suche gilt erst als vollständig, wenn Ort, Datum und beide
+    // Uhrzeiten gesetzt sind. Solange das nicht zutrifft, zeigt der
+    // Screen nur einen Hinweistext statt Tabs, Karte oder Liste.
     val sucheVollstaendig = ortLat != null && ortLng != null &&
             datumMillis != null && uhrzeitStart.isNotEmpty() && uhrzeitEnd.isNotEmpty()
 
+    // Kombiniert das gewählte Datum mit der Startzeit zu einem
+    // einzigen Timestamp, den die Datenbank-Query als Suchbeginn nutzt.
     val suchVon = remember(datumMillis, startHour, startMinute) {
         datumMillis?.let { basis ->
             Calendar.getInstance().apply {
@@ -133,6 +161,7 @@ fun SucheScreen(
             }.timeInMillis
         }
     }
+    // Kombiniert das gewählte Datum mit der Endzeit, analog zu suchVon.
     val suchBis = remember(datumMillis, endHour, endMinute) {
         datumMillis?.let { basis ->
             Calendar.getInstance().apply {
@@ -145,13 +174,14 @@ fun SucheScreen(
         }
     }
 
-    // fahrzeugTypenListe wird jetzt VOR dem LaunchedEffect deklariert,
-    // da der Effect davon abhängt (besser lesbar, gleiche Funktion wie vorher).
     val fahrzeugTypenListe by viewModel.fahrzeugTypListeFlow.collectAsState(initial = emptyList())
 
+    // Sobald sich Suchzeitraum, Ort oder Fahrzeugtyp ändern UND die
+    // Suche vollständig ist, wird der Filter im ViewModel mit den
+    // neuen Werten aktualisiert. Das löst automatisch eine neue,
+    // reaktive Datenbank-Abfrage über den Flow im ViewModel aus.
     LaunchedEffect(sucheVollstaendig, suchVon, suchBis, ortLat, ortLng, selectedFahrzeugTyp, fahrzeugTypenListe) {
         if (sucheVollstaendig && suchVon != null && suchBis != null) {
-            // Fix: "sort" existierte nicht, korrekt ist fahrzeugTypenListe.
             val gewaehlterTyp = fahrzeugTypenListe.find { it.bezeichnung == selectedFahrzeugTyp }
             viewModel.updateFilter(
                 viewModel.filter.value.copy(
@@ -163,6 +193,9 @@ fun SucheScreen(
         }
     }
 
+    // Solange die Suche nicht vollständig ist, bleibt die Liste leer
+    // und es wird gar nicht erst beim ViewModel nachgefragt - das
+    // verhindert unnötige Datenbankzugriffe mit unvollständigen Daten.
     val stellplaetzeListe by if (sucheVollstaendig && ortLat != null && ortLng != null) {
         viewModel.stellplaetzeMitEntfernung(ortLat!!, ortLng!!)
             .collectAsState(initial = emptyList())
@@ -170,6 +203,11 @@ fun SucheScreen(
         remember { mutableStateOf(emptyList()) }
     }
 
+    // Preis-Sortierung kommt bereits sortiert aus der DB-Query
+    // (ORDER BY mit CASE WHEN), daher hier nur durchreichen. Die
+    // Entfernung wird dagegen lokal sortiert, weil die Distanz erst
+    // zur Laufzeit per Haversine-Formel berechnet wird und SQLite das
+    // nicht nativ kann.
     val sortierteListe by remember(selectedSortierung, stellplaetzeListe) {
         derivedStateOf {
             when (selectedSortierung.label) {
@@ -181,6 +219,8 @@ fun SucheScreen(
         }
     }
 
+    // Marker für die Kartenansicht: Position plus Anzeigetext
+    // (vollständige Adresse und Preis pro Stunde).
     val markers = sortierteListe.map { details ->
         Pair(
             GeoPoint(details.stellplatz.gps_lat.toDouble(), details.stellplatz.gps_lng.toDouble()),
@@ -193,6 +233,9 @@ fun SucheScreen(
         PillTab("Liste", Icons.AutoMirrored.Outlined.FormatListBulleted)
     )
 
+    // Zeigt die Fehler-Snackbar an, sobald showFehler auf true
+    // gesetzt wird. Läuft als Coroutine, da showSnackbar() eine
+    // suspend-Funktion ist und nicht direkt im Composable aufrufbar wäre.
     LaunchedEffect(showFehler) {
         if (showFehler && showFehlerMessage != "") {
             snackbarHostState.showSnackbar(
@@ -203,96 +246,64 @@ fun SucheScreen(
         }
     }
 
-    SucheDatePickerDialog(
+    // Die drei Auswahl-Dialoge mit ihrer Validierungslogik
+    // (Vergangenheits-Prüfung, Start-vor-Ende-Prüfung) leben in
+    // SucheValidierung.kt im components-Package.
+    SucheDatumDialog(
         show = showDatePicker,
         state = datePickerState,
         onDismiss = { showDatePicker = false },
-        onConfirm = { millis ->
-            val heuteMitternacht = aufMitternachtSetzen(System.currentTimeMillis())
-            val gewaehltesDatum = aufMitternachtSetzen(millis)
-
-            if (gewaehltesDatum < heuteMitternacht) {
-                showDatePicker = false
-                showFehler = true
-                showFehlerMessage = "Das gewählte Datum muss heute oder in der Zukunft liegen."
-            } else {
-                val sdf = java.text.SimpleDateFormat("d. MMM", java.util.Locale.GERMAN)
-                datum = sdf.format(java.util.Date(millis))
-                datumMillis = gewaehltesDatum
-                showDatePicker = false
-            }
+        onDatumGewaehlt = { neuerText, neuerMillis ->
+            datum = neuerText
+            datumMillis = neuerMillis
+        },
+        onFehler = { nachricht ->
+            showFehler = true
+            showFehlerMessage = nachricht
         }
     )
 
-    SucheTimePickerDialog(
+    SucheStartzeitDialog(
         show = showTimePickerStart,
-        title = "Startzeit wählen",
-        selectedHour = startHour,
-        selectedMinute = startMinute,
+        startHour = startHour,
+        startMinute = startMinute,
+        endHour = endHour,
+        endMinute = endMinute,
+        uhrzeitEndGesetzt = uhrzeitEnd.isNotEmpty(),
+        datumMillis = datumMillis,
         onHourSelected = { startHour = it },
         onMinuteSelected = { startMinute = it },
         onDismiss = { showTimePickerStart = false },
-        onConfirm = {
-            val startMinuten = startHour * 60 + startMinute
-            val endMinuten = endHour * 60 + endMinute
-
-            // Prüfen ob das gewählte Datum heute ist - nur dann ist eine
-            // Vergangenheits-Prüfung für die Uhrzeit überhaupt nötig.
-            val istHeute = datumMillis != null &&
-                    aufMitternachtSetzen(datumMillis!!) == aufMitternachtSetzen(System.currentTimeMillis())
-
-            val jetztMinuten = run {
-                val cal = Calendar.getInstance()
-                cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
-            }
-
-            if (istHeute && startMinuten < jetztMinuten) {
-                showTimePickerStart = false
-                showFehler = true
-                showFehlerMessage = "Die Startzeit darf nicht in der Vergangenheit liegen."
-            } else if (uhrzeitEnd.isEmpty() || startMinuten < endMinuten) {
-                uhrzeitStart = "%02d:%02d".format(startHour, startMinute)
-                showTimePickerStart = false
-            } else {
-                showTimePickerStart = false
-                showFehler = true
-                showFehlerMessage = "Die Startzeit muss vor der Endzeit liegen."
-            }
+        onUebernehmen = { neuerText ->
+            uhrzeitStart = neuerText
+            showTimePickerStart = false
+        },
+        onFehler = { nachricht ->
+            showTimePickerStart = false
+            showFehler = true
+            showFehlerMessage = nachricht
         }
     )
 
-    SucheTimePickerDialog(
+    SucheEndzeitDialog(
         show = showTimePickerEnd,
-        title = "Endzeit wählen",
-        selectedHour = endHour,
-        selectedMinute = endMinute,
+        startHour = startHour,
+        startMinute = startMinute,
+        endHour = endHour,
+        endMinute = endMinute,
+        uhrzeitStartGesetzt = uhrzeitStart.isNotEmpty(),
+        datumMillis = datumMillis,
         onHourSelected = { endHour = it },
         onMinuteSelected = { endMinute = it },
         onDismiss = { showTimePickerEnd = false },
-        onConfirm = {
-            val startMinuten = startHour * 60 + startMinute
-            val endMinuten = endHour * 60 + endMinute
-
-            val istHeute = datumMillis != null &&
-                    aufMitternachtSetzen(datumMillis!!) == aufMitternachtSetzen(System.currentTimeMillis())
-
-            val jetztMinuten = run {
-                val cal = Calendar.getInstance()
-                cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
-            }
-
-            if (istHeute && endMinuten < jetztMinuten) {
-                showTimePickerEnd = false
-                showFehler = true
-                showFehlerMessage = "Die Endzeit darf nicht in der Vergangenheit liegen."
-            } else if (uhrzeitStart.isEmpty() || endMinuten > startMinuten) {
-                uhrzeitEnd = "%02d:%02d".format(endHour, endMinute)
-                showTimePickerEnd = false
-            } else {
-                showTimePickerEnd = false
-                showFehler = true
-                showFehlerMessage = "Die Endzeit muss nach der Startzeit liegen."
-            }
+        onUebernehmen = { neuerText ->
+            uhrzeitEnd = neuerText
+            showTimePickerEnd = false
+        },
+        onFehler = { nachricht ->
+            showTimePickerEnd = false
+            showFehler = true
+            showFehlerMessage = nachricht
         }
     )
 
@@ -307,12 +318,15 @@ fun SucheScreen(
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) {  _ ->
+    ) { _ ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp),
         ) {
+            // Sticky Header: bleibt beim Scrollen oben fixiert, damit
+            // der Filter-Zugriff immer erreichbar bleibt. Eigener
+            // Hintergrund nötig, sonst scheint der Inhalt darunter durch.
             stickyHeader {
                 Box(
                     modifier = Modifier
@@ -365,6 +379,8 @@ fun SucheScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
+            // Solange nicht alle Pflichtfelder gesetzt sind: nur
+            // Hinweistext, keine Tabs/Karte/Liste anzeigen.
             if (!sucheVollstaendig) {
                 item {
                     Box(
@@ -401,6 +417,9 @@ fun SucheScreen(
                         onSortierungSelected = {
                             selectedSortierung = it
                             showSortieren = false
+                            // Bei Preis-Sortierung muss zusätzlich das
+                            // ViewModel informiert werden, damit die
+                            // DB-Query mit dem richtigen ORDER BY neu läuft.
                             if (it.label == "Preis aufsteigend" || it.label == "Preis absteigend") {
                                 viewModel.updateFilter(
                                     viewModel.filter.value.copy(preisAufsteigend = it.label == "Preis aufsteigend")
@@ -411,6 +430,7 @@ fun SucheScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
+                // Karte nur anzeigen, wenn der Karten-Tab aktiv ist
                 if (selectedView == 0) {
                     item {
                         OsmMapView(

@@ -21,6 +21,19 @@ import kotlin.math.max
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+/**
+ * Alle Filterkriterien der Stellplatzsuche in einem Objekt.
+ *
+ * [minLaenge], [minBreite] und [minHoehe] sind die vom Nutzer manuell
+ * im Filter-Dialog eingestellten Mindestmaße in Zentimetern. Ist
+ * zusätzlich ein [fahrzeugTyp] gewählt, gewinnt im ViewModel jeweils
+ * der größere Wert aus Slider und Fahrzeugtyp-Maß - so kann der
+ * Nutzer die Mindestanforderung des Fahrzeugtyps nicht versehentlich
+ * unterschreiten.
+ *
+ * [von] und [bis] definieren den gesuchten Buchungszeitraum und werden
+ * vom Screen anhand der gewählten Uhrzeit/des Datums gesetzt.
+ */
 data class StellplatzFilter(
     val minLaenge: Float = 300f,
     val minHoehe: Float = 180f,
@@ -34,6 +47,12 @@ data class StellplatzFilter(
     val preisAufsteigend: Boolean = true
 )
 
+/**
+ * Ein Stellplatz, angereichert mit allen Daten, die für die Anzeige
+ * in Liste oder Karte benötigt werden, aber nicht direkt in der
+ * stellplatz-Tabelle stehen: zugehörige Adresse, durchschnittliche
+ * Bewertung samt Anzahl, und die berechnete Entfernung zum Suchort.
+ */
 data class StellplatzMitDetails(
     val stellplatz: Stellplatz,
     val adresse: Adresse?,
@@ -42,6 +61,18 @@ data class StellplatzMitDetails(
     val entfernungMeter: Int
 )
 
+/**
+ * ViewModel für die Stellplatzsuche.
+ *
+ * Der Filterzustand liegt als [MutableStateFlow] vor, sodass jede
+ * Änderung über [updateFilter] automatisch eine neue, gefilterte
+ * Datenbankabfrage auslöst ([flatMapLatest]). Die eigentliche
+ * Filterung (Mindestmaße, Preis, Zeitraum-Überlappung mit Buchungen
+ * und Sperrzeiten) läuft per SQL direkt in [StellplatzDao.getGefiltert],
+ * ebenso wie die Preis-Sortierung. Die Entfernungsberechnung dagegen
+ * passiert hier in Kotlin, da SQLite keine trigonometrischen
+ * Funktionen für die Haversine-Formel mitbringt.
+ */
 class SucheViewModel(
     private val stellplatzDao: StellplatzDao,
     private val adresseDao: AdresseDao,
@@ -58,6 +89,15 @@ class SucheViewModel(
         _filter.value = neuerFilter
     }
 
+    /**
+     * Stellplätze, gefiltert nach den aktuellen Kriterien in [_filter].
+     *
+     * Die effektiven Mindestmaße ergeben sich aus dem größeren Wert
+     * von Slider-Einstellung und gewähltem Fahrzeugtyp (siehe
+     * Dokumentation zu [StellplatzFilter]). Die eigentliche Filterung
+     * inklusive Zeitraum-Überlappung mit Buchungen/Sperrzeiten und
+     * Preis-Sortierung läuft als SQL-Query in [StellplatzDao].
+     */
     private val gefilterteStellplaetze: Flow<List<Stellplatz>> =
         _filter.flatMapLatest { f ->
             val effektiveMinLaenge = max(f.minLaenge, f.fahrzeugTyp?.laenge_cm ?: 0f)
@@ -77,6 +117,13 @@ class SucheViewModel(
             )
         }
 
+    /**
+     * Verknüpft die gefilterten Stellplätze mit ihrer Adresse und dem
+     * berechneten Bewertungsdurchschnitt. Läuft als [Triple], um nicht
+     * vorzeitig auf [StellplatzMitDetails] festzulegen - die Entfernung
+     * fehlt hier noch, da sie erst mit konkreten Suchkoordinaten
+     * berechnet werden kann (siehe [stellplaetzeMitEntfernung]).
+     */
     private val basisDaten: Flow<List<Triple<Stellplatz, Adresse?, Pair<Float, Int>>>> =
         combine(
             gefilterteStellplaetze,
@@ -93,6 +140,12 @@ class SucheViewModel(
             }
         }
 
+    /**
+     * Liefert die gefilterten Stellplätze inklusive Entfernung zum
+     * angegebenen Suchort, begrenzt auf [radiusMeter] (Standard 2 km).
+     * Stellplätze außerhalb des Radius werden komplett ausgeschlossen,
+     * nicht nur markiert.
+     */
     fun stellplaetzeMitEntfernung(suchLat: Double, suchLng: Double, radiusMeter: Int = 2000): Flow<List<StellplatzMitDetails>> =
         basisDaten.map { liste ->
             liste.map { (stellplatz, adresse, bewertungInfo) ->
@@ -109,6 +162,12 @@ class SucheViewModel(
             }.filter { it.entfernungMeter <= radiusMeter }
         }
 
+    /**
+     * Berechnet die Luftlinien-Entfernung zwischen zwei GPS-Koordinaten
+     * in Metern mittels Haversine-Formel. Berücksichtigt die
+     * Erdkrümmung, ist also genauer als eine einfache euklidische
+     * Distanzberechnung auf Breiten-/Längengrad.
+     */
     private fun haversineMeter(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Int {
         val erdradius = 6371000.0
         val dLat = Math.toRadians(lat2 - lat1)

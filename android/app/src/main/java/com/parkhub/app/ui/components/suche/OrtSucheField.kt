@@ -32,6 +32,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
+// Antwortformat der Nominatim-API, sowohl für Vorwärts- als auch
+// Rückwärts-Geocoding verwendet.
 data class NominatimResult(
     val display_name: String,
     val lat: String,
@@ -44,6 +46,7 @@ val nominatimClient = HttpClient(Android) {
     }
 }
 
+// Sucht Orte anhand eines Suchbegriffs (Vorwärts-Geocoding).
 suspend fun sucheOrte(query: String): List<NominatimResult> {
     return try {
         nominatimClient.get("https://nominatim.openstreetmap.org/search") {
@@ -58,6 +61,7 @@ suspend fun sucheOrte(query: String): List<NominatimResult> {
     }
 }
 
+// Wandelt GPS-Koordinaten in einen lesbaren Ortsnamen um (Rückwärts-Geocoding).
 suspend fun reverseGeocode(lat: Double, lon: Double): String? {
     return try {
         val result: NominatimResult = nominatimClient.get("https://nominatim.openstreetmap.org/reverse") {
@@ -72,6 +76,9 @@ suspend fun reverseGeocode(lat: Double, lon: Double): String? {
     }
 }
 
+// Texteingabefeld für die Ortssuche mit drei Funktionen: automatische
+// Standorterkennung beim Öffnen, Live-Vorschläge während der Eingabe
+// (mit Debounce), und Auswahl aus der Vorschlagsliste.
 @SuppressLint("MissingPermission")
 @Composable
 fun OrtSucheField(
@@ -95,11 +102,11 @@ fun OrtSucheField(
                 isStandortLoading = true
                 val fusedClient = LocationServices.getFusedLocationProviderClient(context)
                 try {
-                    // lastLocation zuerst - ist im Emulator quasi sofort da
+                    // lastLocation zuerst, da im Emulator quasi sofort verfügbar
                     var location = fusedClient.lastLocation.await()
 
                     if (location == null) {
-                        // Nur falls wirklich noch nie eine Position bekannt war
+                        // Fallback nur falls noch nie eine Position bekannt war
                         location = fusedClient.getCurrentLocation(
                             Priority.PRIORITY_BALANCED_POWER_ACCURACY,
                             null
@@ -114,7 +121,7 @@ fun OrtSucheField(
                         }
                     }
                 } catch (e: Exception) {
-                    // Standort konnte nicht ermittelt werden - Feld bleibt leer
+                    // Standort konnte nicht ermittelt werden, Feld bleibt leer
                 } finally {
                     isStandortLoading = false
                 }
@@ -122,7 +129,7 @@ fun OrtSucheField(
         }
     }
 
-    // Berechtigung wird einmalig beim ersten Anzeigen des Felds angefragt.
+    // Berechtigung wird einmalig beim ersten Anzeigen des Felds angefragt
     LaunchedEffect(Unit) {
         permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
@@ -136,7 +143,7 @@ fun OrtSucheField(
                 if (input.length >= 3) {
                     searchJob = scope.launch {
                         isLoading = true
-                        delay(400)
+                        delay(400) // Debounce, wartet bevor die Suche ausgelöst wird
                         val ergebnisse = sucheOrte(input)
                         vorschlaege = ergebnisse
                         zeigeVorschlaege = ergebnisse.isNotEmpty()
@@ -174,6 +181,7 @@ fun OrtSucheField(
             singleLine = true
         )
 
+        // Vorschlagsliste unterhalb des Textfelds
         if (zeigeVorschlaege) {
             Card(
                 modifier = Modifier
