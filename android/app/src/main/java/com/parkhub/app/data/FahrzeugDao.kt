@@ -1,11 +1,6 @@
 package com.parkhub.app.data
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 import com.parkhub.app.model.Fahrzeug
 import kotlinx.coroutines.flow.Flow
 
@@ -15,14 +10,11 @@ interface FahrzeugDao {
     @Query("SELECT * FROM fahrzeug")
     fun getAllFahrzeug(): Flow<List<Fahrzeug>>
 
-    @Query("SELECT COUNT(*) FROM fahrzeug")
-    suspend fun count(): Long
+    @Query("SELECT * FROM fahrzeug WHERE (:status IS NULL OR status = :status)")
+    fun getAllFahrzeugByStatus(status: String?): Flow<List<Fahrzeug>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(fahrzeug: Fahrzeug): Long
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(fahrzeugListe: List<Fahrzeug>): List<Long>
+    suspend fun insertAll(liste: List<Fahrzeug>)
 
     @Update
     suspend fun update(fahrzeug: Fahrzeug): Int

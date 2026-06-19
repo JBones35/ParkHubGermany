@@ -50,19 +50,28 @@ fun FlotteScreen(
 
     val currentFilter = if (selectedTab == 0) fahrzeugFilter else fahrerFilter
 
-    val gefilterteFahrzeugListe = when (selectedFilter) {
-        1 -> fahrzeugMitTypListe.filter { it.fahrzeug.status == FahrzeugStatus.AKTIV }
-        2 -> fahrzeugMitTypListe.filter { it.fahrzeug.status == FahrzeugStatus.WARTUNG }
-        else -> fahrzeugMitTypListe
+    LaunchedEffect(selectedFilter, selectedTab) {
+        if (selectedTab == 0) {
+            viewModel.setFahrzeugStatusFilter(
+                when (selectedFilter) {
+                    1 -> FahrzeugStatus.AKTIV
+                    2 -> FahrzeugStatus.WARTUNG
+                    else -> null
+                }
+            )
+        } else {
+            viewModel.setFahrerStatusFilter(
+                when (selectedFilter) {
+                    1 -> FahrerStatus.FREI
+                    2 -> FahrerStatus.EINGESETZT
+                    3 -> FahrerStatus.ABWESEND
+                    else -> null
+                }
+            )
+        }
     }
 
-    val gefilterteFahrerliste = when (selectedFilter) {
-        1 -> fahrerListFromDb.filter { it.status == FahrerStatus.FREI }
-        2 -> fahrerListFromDb.filter { it.status == FahrerStatus.EINGESETZT }
-        3 -> fahrerListFromDb.filter { it.status == FahrerStatus.ABWESEND }
-        else -> fahrerListFromDb
-    }
-
+    // Beim Tab-Wechsel den Filter wieder auf "Alle" zurücksetzen
     LaunchedEffect(selectedTab) {
         selectedFilter = 0
     }
@@ -125,13 +134,13 @@ fun FlotteScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 when (selectedTab) {
-                    0 -> items(gefilterteFahrzeugListe) { fahrzeugMitTyp ->
+                    0 -> items(fahrzeugMitTypListe) { fahrzeugMitTyp ->
                         FahrzeugItem(
                             fahrzeug = fahrzeugMitTyp.fahrzeug,
                             fahrzeugTyp = fahrzeugMitTyp.typ
                         )
                     }
-                    1 -> items(gefilterteFahrerliste) { fahrer ->
+                    1 -> items(fahrerListFromDb) { fahrer ->
                         FahrerItem(fahrer = fahrer)
                     }
                 }

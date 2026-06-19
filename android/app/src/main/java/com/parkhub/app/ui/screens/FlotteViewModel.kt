@@ -2,20 +2,19 @@
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
 import com.parkhub.app.data.FahrerDao
 import com.parkhub.app.data.FahrzeugDao
 import com.parkhub.app.data.FahrzeugTypDao
 import com.parkhub.app.model.Fahrer
-import com.parkhub.app.model.FahrzeugTyp
+import com.parkhub.app.model.FahrerStatus
 import com.parkhub.app.model.Fahrzeug
-import com.parkhub.app.model.fahrerListe
-import com.parkhub.app.model.fahrzeugListe
-import com.parkhub.app.model.fahrzeugTypListe
+import com.parkhub.app.model.FahrzeugStatus
+import com.parkhub.app.model.FahrzeugTyp
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.flatMapLatest
 
 data class FahrzeugMitTyp(
     val fahrzeug: Fahrzeug,
@@ -28,15 +27,37 @@ class FlotteViewModel(
     private val fahrzeugTypDao: FahrzeugTypDao
 ) : ViewModel() {
 
-    val fahrerList: Flow<List<Fahrer>> = fahrerDao.getAllFahrer()
+    private val _fahrerStatusFilter = MutableStateFlow<FahrerStatus?>(null)
+    val fahrerStatusFilter: StateFlow<FahrerStatus?> = _fahrerStatusFilter
+
+    private val _fahrzeugStatusFilter = MutableStateFlow<FahrzeugStatus?>(null)
+    val fahrzeugStatusFilter: StateFlow<FahrzeugStatus?> = _fahrzeugStatusFilter
+
+    fun setFahrerStatusFilter(status: FahrerStatus?) {
+        _fahrerStatusFilter.value = status
+    }
+
+    fun setFahrzeugStatusFilter(status: FahrzeugStatus?) {
+        _fahrzeugStatusFilter.value = status
+    }
+
+    val fahrerList: Flow<List<Fahrer>> =
+        _fahrerStatusFilter.flatMapLatest { status ->
+            fahrerDao.getAllFahrerByStatus(status?.name)
+        }
 
     val fahrzeugMitTypListe: Flow<List<FahrzeugMitTyp>> =
-        combine(fahrzeugDao.getAllFahrzeug(), fahrzeugTypDao.getAll()) { fahrzeuge, typen ->
-            fahrzeuge.map { fahrzeug ->
-                FahrzeugMitTyp(
-                    fahrzeug = fahrzeug,
-                    typ = typen.find { it.id == fahrzeug.fahrzeugTypId }
-                )
+        _fahrzeugStatusFilter.flatMapLatest { status ->
+            combine(
+                fahrzeugDao.getAllFahrzeugByStatus(status?.name),
+                fahrzeugTypDao.getAll()
+            ) { fahrzeuge, typen ->
+                fahrzeuge.map { fahrzeug ->
+                    FahrzeugMitTyp(
+                        fahrzeug = fahrzeug,
+                        typ = typen.find { it.id == fahrzeug.fahrzeugTypId }
+                    )
+                }
             }
         }
 }
