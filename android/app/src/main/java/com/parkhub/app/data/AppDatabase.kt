@@ -25,7 +25,7 @@ import com.parkhub.app.model.StellplatzFahrzeugtyp
         Bewertung::class, StellplatzFahrzeugtyp::class, Fahrerzuweisung::class,
         Adresse::class, FahrerAusfall::class,FahrzeugAusfall::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
