@@ -1,5 +1,9 @@
 package com.parkhub.app.ui.components.suche
 
+import android.Manifest
+import android.annotation.SuppressLint
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,8 +15,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.parkhub.app.ui.theme.*
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -23,6 +30,7 @@ import io.ktor.serialization.gson.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 data class NominatimResult(
     val display_name: String,
@@ -50,6 +58,21 @@ suspend fun sucheOrte(query: String): List<NominatimResult> {
     }
 }
 
+suspend fun reverseGeocode(lat: Double, lon: Double): String? {
+    return try {
+        val result: NominatimResult = nominatimClient.get("https://nominatim.openstreetmap.org/reverse") {
+            parameter("lat", lat)
+            parameter("lon", lon)
+            parameter("format", "json")
+            header("User-Agent", "ParkHub/1.0")
+        }.body()
+        result.display_name
+    } catch (e: Exception) {
+        null
+    }
+}
+
+@SuppressLint("MissingPermission")
 @Composable
 fun OrtSucheField(
     ort: String,
@@ -57,10 +80,52 @@ fun OrtSucheField(
     onOrtSelected: (String, Double, Double) -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var vorschlaege by remember { mutableStateOf<List<NominatimResult>>(emptyList()) }
     var zeigeVorschlaege by remember { mutableStateOf(false) }
     var searchJob by remember { mutableStateOf<Job?>(null) }
     var isLoading by remember { mutableStateOf(false) }
+    var isStandortLoading by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            scope.launch {
+                isStandortLoading = true
+                val fusedClient = LocationServices.getFusedLocationProviderClient(context)
+                try {
+                    // lastLocation zuerst - ist im Emulator quasi sofort da
+                    var location = fusedClient.lastLocation.await()
+
+                    if (location == null) {
+                        // Nur falls wirklich noch nie eine Position bekannt war
+                        location = fusedClient.getCurrentLocation(
+                            Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                            null
+                        ).await()
+                    }
+
+                    if (location != null) {
+                        val name = reverseGeocode(location.latitude, location.longitude)
+                        if (name != null) {
+                            onOrtChange(name)
+                            onOrtSelected(name, location.latitude, location.longitude)
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Standort konnte nicht ermittelt werden - Feld bleibt leer
+                } finally {
+                    isStandortLoading = false
+                }
+            }
+        }
+    }
+
+    // Berechtigung wird einmalig beim ersten Anzeigen des Felds angefragt.
+    LaunchedEffect(Unit) {
+        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+    }
 
     Column {
         OutlinedTextField(
@@ -71,7 +136,7 @@ fun OrtSucheField(
                 if (input.length >= 3) {
                     searchJob = scope.launch {
                         isLoading = true
-                        delay(400) // Debounce — wartet 400ms bevor gesucht wird
+                        delay(400)
                         val ergebnisse = sucheOrte(input)
                         vorschlaege = ergebnisse
                         zeigeVorschlaege = ergebnisse.isNotEmpty()
@@ -93,7 +158,7 @@ fun OrtSucheField(
                 )
             },
             trailingIcon = {
-                if (isLoading) {
+                if (isLoading || isStandortLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         color = ParkHubGreen,
@@ -109,7 +174,6 @@ fun OrtSucheField(
             singleLine = true
         )
 
-        // Vorschlagsliste
         if (zeigeVorschlaege) {
             Card(
                 modifier = Modifier

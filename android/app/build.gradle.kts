@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.ktor.serialization.gson)
     implementation(libs.room.runtime)
     implementation(libs.datastore.preferences)
+    implementation(libs.kotlinx.coroutines.play.services)
     ksp(libs.room.compiler)
     testImplementation("junit:junit:4.13.2")
 }
