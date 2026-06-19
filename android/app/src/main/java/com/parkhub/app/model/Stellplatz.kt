@@ -28,5 +28,12 @@ data class Stellplatz(
     val hoehe_cm: Float,
     val preis_stunde: Float,
     val gps_lat: Float,
-    val gps_lng: Float
+    val gps_lng: Float,
+
+    val maxGewichtTonnen: Float = 3.5f,
+    val geeignetFuer: String = "Sprinter, Crafter geeignet",
+    val videoUeberwacht: Boolean = true,
+    val videoHinweis: String = "24/7 Aufzeichnung",
+    val zugangsart: String = "Code-Tor",
+    val zugangshinweis: String = "Code wird vor Ankunft übermittelt"
 )

@@ -51,6 +51,37 @@ fun SucheScreen(
     )
 ) {
     val state = rememberSucheUiState()
+    var ausgewaehlterStellplatz by remember { mutableStateOf<StellplatzMitDetails?>(null) }
+    var zeigeBuchungsBestaetigung by remember { mutableStateOf(false) }
+
+    if (zeigeBuchungsBestaetigung && ausgewaehlterStellplatz != null) {
+        BuchungsBestaetigungScreen(
+            stellplatz = ausgewaehlterStellplatz!!,
+            von = state.suchVon,
+            bis = state.suchBis,
+            fahrzeug = null,
+            fahrer = null,
+            onBackClick = { zeigeBuchungsBestaetigung = false },
+            onJetztBuchenClick = {
+                zeigeBuchungsBestaetigung = false
+                ausgewaehlterStellplatz = null
+            }
+        )
+        return
+    }
+
+    ausgewaehlterStellplatz?.let { details ->
+        StellplatzDetailScreen(
+            stellplatz = details,
+            von = state.suchVon,
+            bis = state.suchBis,
+            onBackClick = { ausgewaehlterStellplatz = null },
+            onBuchenClick = {
+                zeigeBuchungsBestaetigung = true
+            }
+        )
+        return
+    }
 
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = System.currentTimeMillis()
@@ -350,7 +381,7 @@ fun SucheScreen(
                 items(items = sortierteListe, key = { it.stellplatz.id }) { details ->
                     StellplatzListeItem(
                         stellplatz = details,
-                        onClick = { }
+                        onClick = { ausgewaehlterStellplatz = details }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
