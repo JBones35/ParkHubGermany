@@ -21,7 +21,7 @@ class Converters {
     fun toFahrzeugStatus(value: String): FahrzeugStatus = try {
         FahrzeugStatus.valueOf(value)
     } catch (e: Exception) {
-        FahrzeugStatus.AKTIV
+        FahrzeugStatus.FREI
     }
 
     @TypeConverter

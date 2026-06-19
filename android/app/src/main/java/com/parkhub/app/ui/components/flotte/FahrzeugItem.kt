@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,11 +21,13 @@ import com.parkhub.app.model.FahrzeugStatus
 import com.parkhub.app.model.FahrzeugTyp
 import com.parkhub.app.ui.theme.Gray
 import com.parkhub.app.ui.theme.StatusWartung
+import com.parkhub.app.ui.theme.StatusBesetzt
 
 @Composable
 fun FahrzeugItem(
     fahrzeug: Fahrzeug,
     fahrzeugTyp: FahrzeugTyp?,
+    status: FahrzeugStatus,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -39,17 +42,26 @@ fun FahrzeugItem(
                     .size(44.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
-                        if (fahrzeug.status == FahrzeugStatus.WARTUNG)
-                            Color(0xFFFFE0B2) else MaterialTheme.colorScheme.secondaryContainer
+                        when (status) {
+                            FahrzeugStatus.WARTUNG -> Color(0xFFE0E0E0)
+                            FahrzeugStatus.BESETZT -> Color(0xFFFFE0B2)
+                            FahrzeugStatus.FREI -> MaterialTheme.colorScheme.secondaryContainer
+                        }
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (fahrzeug.status == FahrzeugStatus.WARTUNG)
-                        Icons.Filled.Build else Icons.Outlined.LocalShipping,
+                    imageVector = when (status) {
+                        FahrzeugStatus.WARTUNG -> Icons.Filled.Build
+                        FahrzeugStatus.BESETZT -> Icons.Outlined.Schedule
+                        FahrzeugStatus.FREI -> Icons.Outlined.LocalShipping
+                    },
                     contentDescription = null,
-                    tint = if (fahrzeug.status == FahrzeugStatus.WARTUNG)
-                        StatusWartung else MaterialTheme.colorScheme.onBackground,
+                    tint = when (status) {
+                        FahrzeugStatus.WARTUNG -> StatusWartung
+                        FahrzeugStatus.BESETZT -> StatusBesetzt
+                        FahrzeugStatus.FREI -> MaterialTheme.colorScheme.onBackground
+                    },
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -73,7 +85,7 @@ fun FahrzeugItem(
                 )
             }
 
-            StatusBadge(status = fahrzeug.status)
+            StatusBadge(status = status)
         }
 
         HorizontalDivider(

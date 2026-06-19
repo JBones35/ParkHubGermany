@@ -14,12 +14,14 @@ import androidx.compose.ui.unit.sp
 import com.parkhub.app.model.FahrzeugStatus
 import com.parkhub.app.ui.theme.StatusAktiv
 import com.parkhub.app.ui.theme.StatusWartung
+import com.parkhub.app.ui.theme.StatusBesetzt
 
 @Composable
 fun StatusBadge(status: FahrzeugStatus, modifier: Modifier = Modifier) {
     val (text, color) = when (status) {
-        FahrzeugStatus.AKTIV -> Pair("● Aktiv", StatusAktiv)
+        FahrzeugStatus.FREI -> Pair("● FREI", StatusAktiv)
         FahrzeugStatus.WARTUNG -> Pair("● Wartung", StatusWartung)
+        FahrzeugStatus.BESETZT -> Pair("● Besetzt", StatusBesetzt)
     }
 
     Box(

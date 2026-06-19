@@ -23,8 +23,8 @@ val DarkCard = Color(0xFF2C2C2C)
 
 // Status Farben
 val StatusAktiv = Color(0xFF2E7D32)
-val StatusWartung = Color(0xFFE65100)
-val StatusInaktiv = Color(0xFF9E9E9E)
+val StatusBesetzt = Color(0xFFE65100)
+val StatusWartung = Color(0xFF9E9E9E)
 
 // Akzentfarben
 val BlueAccent = Color(0xFF1565C0)

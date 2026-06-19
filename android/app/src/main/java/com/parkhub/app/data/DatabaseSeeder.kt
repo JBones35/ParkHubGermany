@@ -3,8 +3,10 @@ package com.parkhub.app.data
 import com.parkhub.app.model.adresseListe
 import com.parkhub.app.model.bewertungListe
 import com.parkhub.app.model.buchungListe
+import com.parkhub.app.model.fahrerAusfallListe
 import com.parkhub.app.model.fahrerListe
 import com.parkhub.app.model.fahrerzuweisungListe
+import com.parkhub.app.model.fahrzeugAusfallListe
 import com.parkhub.app.model.fahrzeugListe
 import com.parkhub.app.model.fahrzeugTypListe
 import com.parkhub.app.model.sperrzeitListe
@@ -53,6 +55,13 @@ class DatabaseSeeder(private val db: AppDatabase) {
 
         if (db.fahrerzuweisungDao().getAll().firstOrNull().isNullOrEmpty()) {
             db.fahrerzuweisungDao().insertAll(fahrerzuweisungListe)
+        }
+
+        if (db.fahrzeugAusfallDao().getAll().firstOrNull().isNullOrEmpty()) {
+            db.fahrzeugAusfallDao().insertAll(fahrzeugAusfallListe)
+        }
+        if (db.fahrerAusfallDao().getAll().firstOrNull().isNullOrEmpty()) {
+            db.fahrerAusfallDao().insertAll(fahrerAusfallListe)
         }
     }
 }

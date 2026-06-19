@@ -23,6 +23,7 @@ private fun inTagenUm(tage: Int, stunde: Int, minute: Int = 0): Long {
     return cal.timeInMillis
 }
 
+// ===== FAHRZEUGTYP =====
 val sprinter = FahrzeugTyp(UUID.fromString("a1000000-0000-0000-0000-000000000001"), "Mercedes Sprinter", 200f, 540f, 210f, "3,5 t")
 val crafter = FahrzeugTyp(UUID.fromString("a1000000-0000-0000-0000-000000000002"), "VW Crafter", 198f, 530f, 205f, "3,5 t")
 val daily = FahrzeugTyp(UUID.fromString("a1000000-0000-0000-0000-000000000003"), "Iveco Daily", 236f, 640f, 280f, "5,0 t")
@@ -31,30 +32,33 @@ val transit = FahrzeugTyp(UUID.fromString("a1000000-0000-0000-0000-000000000004"
 val fahrzeugTypListe = listOf(sprinter, crafter, daily, transit)
 
 // ===== FAHRZEUG =====
-val fahrzeug1 = Fahrzeug(UUID.fromString("a2000000-0000-0000-0000-000000000001"), "KA-XY 1234", sprinter.id, FahrzeugStatus.AKTIV)
-val fahrzeug2 = Fahrzeug(UUID.fromString("a2000000-0000-0000-0000-000000000002"), "KA-HE 4421", crafter.id, FahrzeugStatus.AKTIV)
-val fahrzeug3 = Fahrzeug(UUID.fromString("a2000000-0000-0000-0000-000000000003"), "KA-DH 8801", daily.id, FahrzeugStatus.WARTUNG)
-val fahrzeug4 = Fahrzeug(UUID.fromString("a2000000-0000-0000-0000-000000000004"), "KA-DH 9012", transit.id, FahrzeugStatus.AKTIV)
+// status entfernt - wird jetzt dynamisch aus Ausfällen/Buchungen berechnet
+val fahrzeug1 = Fahrzeug(UUID.fromString("a2000000-0000-0000-0000-000000000001"), "KA-XY 1234", sprinter.id)
+val fahrzeug2 = Fahrzeug(UUID.fromString("a2000000-0000-0000-0000-000000000002"), "KA-HE 4421", crafter.id)
+val fahrzeug3 = Fahrzeug(UUID.fromString("a2000000-0000-0000-0000-000000000003"), "KA-DH 8801", daily.id)
+val fahrzeug4 = Fahrzeug(UUID.fromString("a2000000-0000-0000-0000-000000000004"), "KA-DH 9012", transit.id)
+val fahrzeug5 = Fahrzeug(UUID.fromString("a2000000-0000-0000-0000-000000000005"), "KA-XY 5678", sprinter.id)
+val fahrzeug6 = Fahrzeug(UUID.fromString("a2000000-0000-0000-0000-000000000006"), "KA-HE 1234", crafter.id)
 
-val fahrzeugListe = listOf(fahrzeug1, fahrzeug2, fahrzeug3, fahrzeug4)
+val fahrzeugListe = listOf(fahrzeug1, fahrzeug2, fahrzeug3, fahrzeug4, fahrzeug5, fahrzeug6)
 
 // ===== FAHRER =====
-val fahrer1 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000001"), "Max", "Müller", "DE123456", FahrerStatus.EINGESETZT)
-val fahrer2 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000002"), "Anna", "Schmidt", "DE654321", FahrerStatus.FREI)
-val fahrer3 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000003"), "Paul", "Weber", "DE789012", FahrerStatus.FREI)
-val fahrer4 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000004"), "Lisa", "Meyer", "DE345678", FahrerStatus.ABWESEND)
-val fahrer5 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000005"), "Tom", "Wagner", "DE901234", FahrerStatus.FREI)
-val fahrer6 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000006"), "Julia", "König", "DE567890", FahrerStatus.FREI)
-val fahrer7 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000007"), "Marco", "Lange", "DE234567", FahrerStatus.FREI)
-val fahrer8 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000008"), "Sophie", "Hoffmann", "DE567123", FahrerStatus.FREI)
-val fahrer9 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000009"), "Oliver", "Becker", "DE890567", FahrerStatus.EINGESETZT)
+// status entfernt - wird jetzt dynamisch aus Ausfällen/Buchungen berechnet
+val fahrer1 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000001"), "Max", "Müller", "DE123456")
+val fahrer2 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000002"), "Anna", "Schmidt", "DE654321")
+val fahrer3 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000003"), "Paul", "Weber", "DE789012")
+val fahrer4 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000004"), "Lisa", "Meyer", "DE345678")
+val fahrer5 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000005"), "Tom", "Wagner", "DE901234")
+val fahrer6 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000006"), "Julia", "König", "DE567890")
+val fahrer7 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000007"), "Marco", "Lange", "DE234567")
+val fahrer8 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000008"), "Sophie", "Hoffmann", "DE567123")
+val fahrer9 = Fahrer(UUID.fromString("a3000000-0000-0000-0000-000000000009"), "Oliver", "Becker", "DE890567")
 
 val fahrerListe = listOf(
     fahrer1, fahrer2, fahrer3, fahrer4, fahrer5, fahrer6, fahrer7, fahrer8, fahrer9
 )
 
 // ===== ADRESSE =====
-// adresse5 ist jetzt Heidelberg statt Karlsruhe
 val adresse1 = Adresse(UUID.fromString("a4000000-0000-0000-0000-000000000001"), "Hauptstraße", "18", "76131", "Karlsruhe")
 val adresse2 = Adresse(UUID.fromString("a4000000-0000-0000-0000-000000000002"), "Kaiserstraße", "142", "76133", "Karlsruhe")
 val adresse3 = Adresse(UUID.fromString("a4000000-0000-0000-0000-000000000003"), "Sophienstraße", "25", "76135", "Karlsruhe")
@@ -64,7 +68,6 @@ val adresse5 = Adresse(UUID.fromString("a4000000-0000-0000-0000-000000000005"), 
 val adresseListe = listOf(adresse1, adresse2, adresse3, adresse4, adresse5)
 
 // ===== STELLPLATZ =====
-// stellplatz5 liegt jetzt in Heidelberg (Koordinaten entsprechend angepasst)
 val stellplatz1 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000001"), "Familie Becker", adresse1.id,
     250f, 600f, 220f, 3.40f, 49.0069f, 8.4037f
@@ -83,7 +86,7 @@ val stellplatz4 = Stellplatz(
 )
 val stellplatz5 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000005"), "Familie Krüger", adresse5.id,
-    255f, 610f, 218f, 5.20f, 49.3988f, 8.6724f // Heidelberg-Koordinaten
+    255f, 610f, 218f, 5.20f, 49.3988f, 8.6724f
 )
 
 val stellplatzListe = listOf(stellplatz1, stellplatz2, stellplatz3, stellplatz4, stellplatz5)
@@ -101,9 +104,6 @@ val stellplatzFahrzeugtypListe = listOf(
 )
 
 // ===== SPERRZEIT =====
-// Für jeden Tag der nächsten 20 Tage (heute = Tag 0 bis Tag 19) eine
-// Sperrzeit von 0-7 Uhr auf stellplatz1. Per Schleife generiert statt
-// 20 einzelne Variablen anzulegen.
 val sperrzeitListe: List<Sperrzeit> = (0..19).map { tag ->
     Sperrzeit(
         id = UUID.fromString("a6000000-0000-0000-0000-${(tag + 1).toString().padStart(12, '0')}"),
@@ -118,8 +118,6 @@ val sperrzeitListe: List<Sperrzeit> = (0..19).map { tag ->
 val logistikId1 = UUID.fromString("a7000000-0000-0000-0000-000000000001")
 val logistikId2 = UUID.fromString("a7000000-0000-0000-0000-000000000002")
 
-// Für jeden Tag der nächsten 20 Tage jeweils 3 Buchungen (14-18 Uhr)
-// auf stellplatz1, stellplatz2, stellplatz3 - mit den Fahrzeugen 1, 2, 3.
 val buchungZuordnung = listOf(
     Triple(stellplatz1.id, fahrzeug1.id, logistikId1),
     Triple(stellplatz2.id, fahrzeug2.id, logistikId1),
@@ -168,3 +166,50 @@ val fahrerzuweisung3 = Fahrerzuweisung(
 )
 
 val fahrerzuweisungListe = listOf(fahrerzuweisung1, fahrerzuweisung2, fahrerzuweisung3)
+
+// ===== FAHRZEUGAUSFALL =====
+// 2 Fahrzeuge fallen durchgehend für die nächsten 10 Wochen (70 Tage) aus.
+// fahrzeug4 (Ford Transit) und fahrzeug3 (Iveco Daily, der ohnehin durch
+// seine Maße kaum auf Stellplätze passt) sind betroffen.
+val fahrzeugAusfall1 = FahrzeugAusfall(
+    UUID.fromString("ab000000-0000-0000-0000-000000000001"),
+    fahrzeugId = fahrzeug4.id,
+    von = inTagenUm(0, 0, 0),
+    bis = inTagenUm(70, 23, 59),
+    grund = "Größere Reparatur in der Werkstatt"
+)
+val fahrzeugAusfall2 = FahrzeugAusfall(
+    UUID.fromString("ab000000-0000-0000-0000-000000000002"),
+    fahrzeugId = fahrzeug3.id,
+    von = inTagenUm(0, 0, 0),
+    bis = inTagenUm(70, 23, 59),
+    grund = "Motorschaden, Ersatzteile bestellt"
+)
+
+val fahrzeugAusfallListe = listOf(fahrzeugAusfall1, fahrzeugAusfall2)
+
+// ===== FAHRERAUSFALL =====
+// 3 Fahrer fallen durchgehend für die nächsten 10 Wochen (70 Tage) aus.
+val fahrerAusfall1 = FahrerAusfall(
+    UUID.fromString("ac000000-0000-0000-0000-000000000001"),
+    fahrerId = fahrer4.id,
+    von = inTagenUm(0, 0, 0),
+    bis = inTagenUm(70, 23, 59),
+    grund = "Langzeitkrankschreibung"
+)
+val fahrerAusfall2 = FahrerAusfall(
+    UUID.fromString("ac000000-0000-0000-0000-000000000002"),
+    fahrerId = fahrer5.id,
+    von = inTagenUm(0, 0, 0),
+    bis = inTagenUm(70, 23, 59),
+    grund = "Elternzeit"
+)
+val fahrerAusfall3 = FahrerAusfall(
+    UUID.fromString("ac000000-0000-0000-0000-000000000003"),
+    fahrerId = fahrer6.id,
+    von = inTagenUm(0, 0, 0),
+    bis = inTagenUm(70, 23, 59),
+    grund = "Längerer Auslandsaufenthalt"
+)
+
+val fahrerAusfallListe = listOf(fahrerAusfall1, fahrerAusfall2, fahrerAusfall3)

@@ -30,45 +30,44 @@ fun FlotteScreen(
         factory = FlotteViewModelFactory(
             fahrerDao = AppDatabase.getDatabase(LocalContext.current).fahrerDao(),
             fahrzeugDao = AppDatabase.getDatabase(LocalContext.current).fahrzeugDao(),
-            fahrzeugTypDao = AppDatabase.getDatabase(LocalContext.current).fahrzeugTypDao()
+            fahrzeugTypDao = AppDatabase.getDatabase(LocalContext.current).fahrzeugTypDao(),
+            buchungDao = AppDatabase.getDatabase(LocalContext.current).buchungDao(),
+            fahrerzuweisungDao = AppDatabase.getDatabase(LocalContext.current).fahrerzuweisungDao(),
+            fahrerAusfallDao = AppDatabase.getDatabase(LocalContext.current).fahrerAusfallDao(),
+            fahrzeugAusfallDao = AppDatabase.getDatabase(LocalContext.current).fahrzeugAusfallDao()
         )
     )
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     var selectedFilter by remember { mutableIntStateOf(0) }
 
-    val fahrerListFromDb by viewModel.fahrerList.collectAsState(initial = emptyList())
-    val fahrzeugMitTypListe by viewModel.fahrzeugMitTypListe.collectAsState(initial = emptyList())
+    val fahrerMitStatusListe by viewModel.fahrerMitStatusListe.collectAsState(initial = emptyList())
+    val fahrzeugMitStatusListe by viewModel.fahrzeugMitStatusListe.collectAsState(initial = emptyList())
 
     val tabs = listOf(
-        PillTab("Fahrzeuge (${fahrzeugMitTypListe.size})"),
-        PillTab("Fahrer (${fahrerListFromDb.size})")
+        PillTab("Fahrzeuge (${fahrzeugMitStatusListe.size})"),
+        PillTab("Fahrer (${fahrerMitStatusListe.size})")
     )
 
-    val fahrzeugFilter = listOf("Alle", "Aktiv", "In Wartung")
+    val fahrzeugFilter = listOf("Alle", "Frei", "Besetzt", "In Wartung")
     val fahrerFilter = listOf("Alle", "Frei", "Eingesetzt", "Abwesend")
 
     val currentFilter = if (selectedTab == 0) fahrzeugFilter else fahrerFilter
 
-    LaunchedEffect(selectedFilter, selectedTab) {
-        if (selectedTab == 0) {
-            viewModel.setFahrzeugStatusFilter(
-                when (selectedFilter) {
-                    1 -> FahrzeugStatus.AKTIV
-                    2 -> FahrzeugStatus.WARTUNG
-                    else -> null
-                }
-            )
-        } else {
-            viewModel.setFahrerStatusFilter(
-                when (selectedFilter) {
-                    1 -> FahrerStatus.FREI
-                    2 -> FahrerStatus.EINGESETZT
-                    3 -> FahrerStatus.ABWESEND
-                    else -> null
-                }
-            )
-        }
+    // Filterung läuft jetzt in Kotlin, da der Status erst zur Laufzeit
+    // berechnet wird und keine Spalte in der DB mehr ist.
+    val gefilterteFahrzeugListe = when (selectedFilter) {
+        1 -> fahrzeugMitStatusListe.filter { it.status == FahrzeugStatus.FREI }
+        2 -> fahrzeugMitStatusListe.filter { it.status == FahrzeugStatus.BESETZT }
+        3 -> fahrzeugMitStatusListe.filter { it.status == FahrzeugStatus.WARTUNG }
+        else -> fahrzeugMitStatusListe
+    }
+
+    val gefilterteFahrerListe = when (selectedFilter) {
+        1 -> fahrerMitStatusListe.filter { it.status == FahrerStatus.FREI }
+        2 -> fahrerMitStatusListe.filter { it.status == FahrerStatus.EINGESETZT }
+        3 -> fahrerMitStatusListe.filter { it.status == FahrerStatus.ABWESEND }
+        else -> fahrerMitStatusListe
     }
 
     // Beim Tab-Wechsel den Filter wieder auf "Alle" zurücksetzen
@@ -134,14 +133,18 @@ fun FlotteScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 when (selectedTab) {
-                    0 -> items(fahrzeugMitTypListe) { fahrzeugMitTyp ->
+                    0 -> items(gefilterteFahrzeugListe) { fahrzeugMitStatus ->
                         FahrzeugItem(
-                            fahrzeug = fahrzeugMitTyp.fahrzeug,
-                            fahrzeugTyp = fahrzeugMitTyp.typ
+                            fahrzeug = fahrzeugMitStatus.fahrzeug,
+                            fahrzeugTyp = fahrzeugMitStatus.typ,
+                            status = fahrzeugMitStatus.status
                         )
                     }
-                    1 -> items(fahrerListFromDb) { fahrer ->
-                        FahrerItem(fahrer = fahrer)
+                    1 -> items(gefilterteFahrerListe) { fahrerMitStatus ->
+                        FahrerItem(
+                            fahrer = fahrerMitStatus.fahrer,
+                            status = fahrerMitStatus.status
+                        )
                     }
                 }
             }

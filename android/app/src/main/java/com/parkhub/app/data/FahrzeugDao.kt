@@ -6,12 +6,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FahrzeugDao {
-
     @Query("SELECT * FROM fahrzeug")
     fun getAllFahrzeug(): Flow<List<Fahrzeug>>
-
-    @Query("SELECT * FROM fahrzeug WHERE (:status IS NULL OR status = :status)")
-    fun getAllFahrzeugByStatus(status: String?): Flow<List<Fahrzeug>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(liste: List<Fahrzeug>)

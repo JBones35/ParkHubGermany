@@ -14,6 +14,8 @@ import com.parkhub.app.model.FahrzeugTyp
 import com.parkhub.app.model.Sperrzeit
 import com.parkhub.app.model.Stellplatz
 import com.parkhub.app.model.Adresse
+import com.parkhub.app.model.FahrerAusfall
+import com.parkhub.app.model.FahrzeugAusfall
 import com.parkhub.app.model.StellplatzFahrzeugtyp
 
 @Database(
@@ -21,7 +23,7 @@ import com.parkhub.app.model.StellplatzFahrzeugtyp
         Fahrer::class, Fahrzeug::class, FahrzeugTyp::class,
         Stellplatz::class, Sperrzeit::class, Buchung::class,
         Bewertung::class, StellplatzFahrzeugtyp::class, Fahrerzuweisung::class,
-        Adresse::class
+        Adresse::class, FahrerAusfall::class,FahrzeugAusfall::class
     ],
     version = 8,
     exportSchema = false
@@ -39,6 +41,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun stellplatzFahrzeugtypDao(): StellplatzFahrzeugtypDao
     abstract fun fahrerzuweisungDao(): FahrerzuweisungDao
     abstract fun adresseDao(): AdresseDao
+
+    abstract fun fahrerAusfallDao(): FahrerAusfallDao
+
+    abstract fun fahrzeugAusfallDao(): FahrzeugAusfallDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

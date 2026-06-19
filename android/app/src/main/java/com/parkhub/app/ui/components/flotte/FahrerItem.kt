@@ -17,13 +17,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.parkhub.app.model.Fahrer
 import com.parkhub.app.model.FahrerStatus
-
-
 import com.parkhub.app.ui.theme.Gray
-import com.parkhub.app.ui.theme.StatusWartung
+import com.parkhub.app.ui.theme.StatusBesetzt
 
 @Composable
-fun FahrerItem(fahrer: Fahrer, modifier: Modifier = Modifier) {
+fun FahrerItem(
+    fahrer: Fahrer,
+    status: FahrerStatus,
+    modifier: Modifier = Modifier
+) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -37,7 +39,7 @@ fun FahrerItem(fahrer: Fahrer, modifier: Modifier = Modifier) {
                     .size(44.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
-                        when (fahrer.status) {
+                        when (status) {
                             FahrerStatus.EINGESETZT -> Color(0xFFFFE0B2)
                             FahrerStatus.ABWESEND -> Color(0xFFEEEEEE)
                             else -> MaterialTheme.colorScheme.secondaryContainer
@@ -46,11 +48,11 @@ fun FahrerItem(fahrer: Fahrer, modifier: Modifier = Modifier) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (fahrer.status == FahrerStatus.EINGESETZT)
+                    imageVector = if (status == FahrerStatus.EINGESETZT)
                         Icons.Filled.PersonOff else Icons.Outlined.Person,
                     contentDescription = null,
-                    tint = when (fahrer.status) {
-                        FahrerStatus.EINGESETZT -> StatusWartung
+                    tint = when (status) {
+                        FahrerStatus.EINGESETZT -> StatusBesetzt
                         FahrerStatus.ABWESEND -> Gray
                         else -> MaterialTheme.colorScheme.onBackground
                     },
@@ -76,7 +78,7 @@ fun FahrerItem(fahrer: Fahrer, modifier: Modifier = Modifier) {
             }
 
             // Status Badge auf der rechten Seite
-            FahrerStatusBadge(status = fahrer.status)
+            FahrerStatusBadge(status = status)
         }
 
         HorizontalDivider(
@@ -121,4 +123,3 @@ fun FahrerStatusBadge(status: FahrerStatus) {
         )
     }
 }
-

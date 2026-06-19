@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 enum class FahrzeugStatus {
-    AKTIV, WARTUNG
+    FREI, WARTUNG, BESETZT
 }
 
 @Entity(
@@ -26,7 +26,6 @@ data class Fahrzeug(
     @PrimaryKey
     val id: UUID = UUID.randomUUID(),
     val kennzeichen: String,
-    val fahrzeugTypId: UUID,
-    val status: FahrzeugStatus = FahrzeugStatus.AKTIV
+    val fahrzeugTypId: UUID
 )
 

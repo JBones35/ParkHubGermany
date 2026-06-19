@@ -26,10 +26,10 @@ class FlotteScreenLogicTest {
     @Test
     fun aktivFilterGibtNurAktiveFahrzeugeMitTypZurueck() {
         val gefilterteListe = fahrzeugMitTypListe()
-            .filter { it.fahrzeug.status == FahrzeugStatus.AKTIV }
+            .filter { it.fahrzeug.status == FahrzeugStatus.FREI }
 
         assertEquals(3, gefilterteListe.size)
-        assertTrue(gefilterteListe.all { it.fahrzeug.status == FahrzeugStatus.AKTIV })
+        assertTrue(gefilterteListe.all { it.fahrzeug.status == FahrzeugStatus.FREI })
     }
 
     @Test
