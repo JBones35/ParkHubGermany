@@ -7,8 +7,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.parkhub.app.ui.screens.Sortierung
-import com.parkhub.app.ui.screens.sortierOptionen
 import com.parkhub.app.ui.theme.*
 
 // Kopfzeile über den Suchergebnissen mit Treffer-Anzahl und einem
