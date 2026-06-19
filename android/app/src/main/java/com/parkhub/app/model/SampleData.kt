@@ -23,10 +23,9 @@ private fun inTagenUm(tage: Int, stunde: Int, minute: Int = 0): Long {
     return cal.timeInMillis
 }
 
-// ===== FAHRZEUGTYP =====
 val sprinter = FahrzeugTyp(UUID.fromString("a1000000-0000-0000-0000-000000000001"), "Mercedes Sprinter", 200f, 540f, 210f, "3,5 t")
 val crafter = FahrzeugTyp(UUID.fromString("a1000000-0000-0000-0000-000000000002"), "VW Crafter", 198f, 530f, 205f, "3,5 t")
-val daily = FahrzeugTyp(UUID.fromString("a1000000-0000-0000-0000-000000000003"), "Iveco Daily", 202f, 550f, 215f, "3,5 t")
+val daily = FahrzeugTyp(UUID.fromString("a1000000-0000-0000-0000-000000000003"), "Iveco Daily", 236f, 640f, 280f, "5,0 t")
 val transit = FahrzeugTyp(UUID.fromString("a1000000-0000-0000-0000-000000000004"), "Ford Transit", 199f, 520f, 208f, "3,5 t")
 
 val fahrzeugTypListe = listOf(sprinter, crafter, daily, transit)
@@ -55,15 +54,17 @@ val fahrerListe = listOf(
 )
 
 // ===== ADRESSE =====
+// adresse5 ist jetzt Heidelberg statt Karlsruhe
 val adresse1 = Adresse(UUID.fromString("a4000000-0000-0000-0000-000000000001"), "Hauptstraße", "18", "76131", "Karlsruhe")
 val adresse2 = Adresse(UUID.fromString("a4000000-0000-0000-0000-000000000002"), "Kaiserstraße", "142", "76133", "Karlsruhe")
 val adresse3 = Adresse(UUID.fromString("a4000000-0000-0000-0000-000000000003"), "Sophienstraße", "25", "76135", "Karlsruhe")
 val adresse4 = Adresse(UUID.fromString("a4000000-0000-0000-0000-000000000004"), "Yorckstraße", "33", "76131", "Karlsruhe")
-val adresse5 = Adresse(UUID.fromString("a4000000-0000-0000-0000-000000000005"), "Erbprinzenstraße", "7", "76133", "Karlsruhe")
+val adresse5 = Adresse(UUID.fromString("a4000000-0000-0000-0000-000000000005"), "Hauptstraße", "120", "69117", "Heidelberg")
 
 val adresseListe = listOf(adresse1, adresse2, adresse3, adresse4, adresse5)
 
 // ===== STELLPLATZ =====
+// stellplatz5 liegt jetzt in Heidelberg (Koordinaten entsprechend angepasst)
 val stellplatz1 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000001"), "Familie Becker", adresse1.id,
     250f, 600f, 220f, 3.40f, 49.0069f, 8.4037f
@@ -82,7 +83,7 @@ val stellplatz4 = Stellplatz(
 )
 val stellplatz5 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000005"), "Familie Krüger", adresse5.id,
-    255f, 610f, 218f, 5.20f, 49.0110f, 8.4005f
+    255f, 610f, 218f, 5.20f, 49.3988f, 8.6724f // Heidelberg-Koordinaten
 )
 
 val stellplatzListe = listOf(stellplatz1, stellplatz2, stellplatz3, stellplatz4, stellplatz5)
@@ -99,38 +100,45 @@ val stellplatzFahrzeugtypListe = listOf(
     StellplatzFahrzeugtyp(stellplatz5.id, transit.id),
 )
 
-// ===== SPERRZEIT (heute 14:00–15:00 Uhr) =====
-val sperrzeit1 = Sperrzeit(
-    UUID.fromString("a6000000-0000-0000-0000-000000000001"), stellplatz1.id,
-    von = heuteUm(14, 0), bis = heuteUm(15, 0),
-    grund = "Wartungsarbeiten am Stellplatz"
-)
-val sperrzeit2 = Sperrzeit(
-    UUID.fromString("a6000000-0000-0000-0000-000000000002"), stellplatz3.id,
-    von = heuteUm(14, 0), bis = heuteUm(15, 0),
-    grund = "Vermieter im Urlaub"
-)
-
-val sperrzeitListe = listOf(sperrzeit1, sperrzeit2)
+// ===== SPERRZEIT =====
+// Für jeden Tag der nächsten 20 Tage (heute = Tag 0 bis Tag 19) eine
+// Sperrzeit von 0-7 Uhr auf stellplatz1. Per Schleife generiert statt
+// 20 einzelne Variablen anzulegen.
+val sperrzeitListe: List<Sperrzeit> = (0..19).map { tag ->
+    Sperrzeit(
+        id = UUID.fromString("a6000000-0000-0000-0000-${(tag + 1).toString().padStart(12, '0')}"),
+        stellplatzId = stellplatz1.id,
+        von = inTagenUm(tag, 0, 0),
+        bis = inTagenUm(tag, 7, 0),
+        grund = "Nächtliche Wartungsarbeiten"
+    )
+}
 
 // ===== BUCHUNG =====
 val logistikId1 = UUID.fromString("a7000000-0000-0000-0000-000000000001")
 val logistikId2 = UUID.fromString("a7000000-0000-0000-0000-000000000002")
 
-val buchung1 = Buchung(
-    UUID.fromString("a8000000-0000-0000-0000-000000000001"), stellplatz2.id, logistikId1, fahrzeug1.id,
-    von = inTagenUm(1, 9, 0), bis = inTagenUm(1, 11, 0), status = BuchungStatus.AKTIV
-)
-val buchung2 = Buchung(
-    UUID.fromString("a8000000-0000-0000-0000-000000000002"), stellplatz4.id, logistikId2, fahrzeug2.id,
-    von = inTagenUm(-1, 9, 0), bis = inTagenUm(-1, 11, 0), status = BuchungStatus.ABGESCHLOSSEN
-)
-val buchung3 = Buchung(
-    UUID.fromString("a8000000-0000-0000-0000-000000000003"), stellplatz1.id, logistikId1, fahrzeug3.id,
-    von = inTagenUm(2, 9, 0), bis = inTagenUm(2, 11, 0), status = BuchungStatus.AKTIV
+// Für jeden Tag der nächsten 20 Tage jeweils 3 Buchungen (14-18 Uhr)
+// auf stellplatz1, stellplatz2, stellplatz3 - mit den Fahrzeugen 1, 2, 3.
+val buchungZuordnung = listOf(
+    Triple(stellplatz1.id, fahrzeug1.id, logistikId1),
+    Triple(stellplatz2.id, fahrzeug2.id, logistikId1),
+    Triple(stellplatz3.id, fahrzeug3.id, logistikId2)
 )
 
-val buchungListe = listOf(buchung1, buchung2, buchung3)
+val buchungListe: List<Buchung> = (0..19).flatMap { tag ->
+    buchungZuordnung.mapIndexed { index, (stellplatzId, fahrzeugId, logistikId) ->
+        Buchung(
+            id = UUID.fromString("a8000000-0000-0000-${(tag + 1).toString().padStart(4, '0')}-${(index + 1).toString().padStart(12, '0')}"),
+            stellplatzId = stellplatzId,
+            logistikId = logistikId,
+            fahrzeugId = fahrzeugId,
+            von = inTagenUm(tag, 14, 0),
+            bis = inTagenUm(tag, 18, 0),
+            status = BuchungStatus.AKTIV
+        )
+    }
+}
 
 // ===== BEWERTUNG =====
 val bewertung1 = Bewertung(
@@ -150,13 +158,13 @@ val bewertungListe = listOf(bewertung1, bewertung2, bewertung3)
 
 // ===== FAHRERZUWEISUNG =====
 val fahrerzuweisung1 = Fahrerzuweisung(
-    UUID.fromString("aa000000-0000-0000-0000-000000000001"), buchung1.id, fahrer1.id, zugewiesenAm = inTagenUm(0, 18, 0)
+    UUID.fromString("aa000000-0000-0000-0000-000000000001"), buchungListe[0].id, fahrer1.id, zugewiesenAm = inTagenUm(0, 13, 0)
 )
 val fahrerzuweisung2 = Fahrerzuweisung(
-    UUID.fromString("aa000000-0000-0000-0000-000000000002"), buchung2.id, fahrer2.id, zugewiesenAm = inTagenUm(-2, 18, 0)
+    UUID.fromString("aa000000-0000-0000-0000-000000000002"), buchungListe[1].id, fahrer2.id, zugewiesenAm = inTagenUm(0, 13, 0)
 )
 val fahrerzuweisung3 = Fahrerzuweisung(
-    UUID.fromString("aa000000-0000-0000-0000-000000000003"), buchung3.id, fahrer9.id, zugewiesenAm = inTagenUm(1, 18, 0)
+    UUID.fromString("aa000000-0000-0000-0000-000000000003"), buchungListe[2].id, fahrer9.id, zugewiesenAm = inTagenUm(0, 13, 0)
 )
 
 val fahrerzuweisungListe = listOf(fahrerzuweisung1, fahrerzuweisung2, fahrerzuweisung3)

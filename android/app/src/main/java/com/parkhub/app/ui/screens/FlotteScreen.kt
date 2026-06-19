@@ -35,7 +35,7 @@ fun FlotteScreen(
     )
 ) {
     var selectedTab by remember { mutableStateOf(0) }
-    var selectedFilter by remember { mutableStateOf(0) }
+    var selectedFilter by remember { mutableIntStateOf(0) }
 
     val fahrerListFromDb by viewModel.fahrerList.collectAsState(initial = emptyList())
     val fahrzeugMitTypListe by viewModel.fahrzeugMitTypListe.collectAsState(initial = emptyList())

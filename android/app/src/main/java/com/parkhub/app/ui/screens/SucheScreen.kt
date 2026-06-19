@@ -1,5 +1,8 @@
 package com.parkhub.app.ui.screens
 
+import android.annotation.SuppressLint
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -33,7 +36,17 @@ val sortierOptionen = listOf(
     Sortierung("Entfernung absteigend", false)
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+private fun aufMitternachtSetzen(millis: Long): Long {
+    return Calendar.getInstance().apply {
+        timeInMillis = millis
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SucheScreen(
     viewModel: SucheViewModel = viewModel(
@@ -54,9 +67,8 @@ fun SucheScreen(
                 .format(java.util.Date())
         )
     }
-    var datumMillis by remember { mutableStateOf<Long?>(System.currentTimeMillis()) }
+    var datumMillis by remember { mutableStateOf<Long?>(aufMitternachtSetzen(System.currentTimeMillis())) }
 
-    // Standardmäßig aufgerundete volle Stunde als Start, +1 Stunde als Ende
     val jetzt = Calendar.getInstance()
     val aktuelleMinute = jetzt.get(Calendar.MINUTE)
     if (aktuelleMinute > 0) {
@@ -88,6 +100,7 @@ fun SucheScreen(
     var showSortieren by remember { mutableStateOf(false) }
     var selectedSortierung by remember { mutableStateOf(sortierOptionen[0]) }
     var showFehler by remember { mutableStateOf(false) }
+    var showFehlerMessage by remember { mutableStateOf("") }
     var showFilterDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -97,11 +110,18 @@ fun SucheScreen(
 
     val aktuellerFilter by viewModel.filter.collectAsState()
 
-    // Suche ist erst vollständig wenn Ort, Datum und beide Uhrzeiten gesetzt sind
+    val filterIstStandard = remember(aktuellerFilter) {
+        aktuellerFilter.minLaenge == 300f &&
+                aktuellerFilter.minBreite == 180f &&
+                aktuellerFilter.minHoehe == 180f &&
+                aktuellerFilter.minPreis == 2.0f &&
+                aktuellerFilter.maxPreis == 8.0f &&
+                aktuellerFilter.minBewertung == 0f
+    }
+
     val sucheVollstaendig = ortLat != null && ortLng != null &&
             datumMillis != null && uhrzeitStart.isNotEmpty() && uhrzeitEnd.isNotEmpty()
 
-    // Suchzeitraum aus Datum + Uhrzeit kombinieren
     val suchVon = remember(datumMillis, startHour, startMinute) {
         datumMillis?.let { basis ->
             Calendar.getInstance().apply {
@@ -125,12 +145,19 @@ fun SucheScreen(
         }
     }
 
-    LaunchedEffect(sucheVollstaendig, suchVon, suchBis, ortLat, ortLng, selectedFahrzeugTyp) {
+    // fahrzeugTypenListe wird jetzt VOR dem LaunchedEffect deklariert,
+    // da der Effect davon abhängt (besser lesbar, gleiche Funktion wie vorher).
+    val fahrzeugTypenListe by viewModel.fahrzeugTypListeFlow.collectAsState(initial = emptyList())
+
+    LaunchedEffect(sucheVollstaendig, suchVon, suchBis, ortLat, ortLng, selectedFahrzeugTyp, fahrzeugTypenListe) {
         if (sucheVollstaendig && suchVon != null && suchBis != null) {
+            // Fix: "sort" existierte nicht, korrekt ist fahrzeugTypenListe.
+            val gewaehlterTyp = fahrzeugTypenListe.find { it.bezeichnung == selectedFahrzeugTyp }
             viewModel.updateFilter(
                 viewModel.filter.value.copy(
                     von = suchVon,
-                    bis = suchBis
+                    bis = suchBis,
+                    fahrzeugTyp = gewaehlterTyp
                 )
             )
         }
@@ -146,20 +173,18 @@ fun SucheScreen(
     val sortierteListe by remember(selectedSortierung, stellplaetzeListe) {
         derivedStateOf {
             when (selectedSortierung.label) {
-                "Preis aufsteigend" -> stellplaetzeListe.sortedBy { it.stellplatz.preis_stunde }
-                "Preis absteigend" -> stellplaetzeListe.sortedByDescending { it.stellplatz.preis_stunde }
+                "Preis aufsteigend", "Preis absteigend" -> stellplaetzeListe
                 "Entfernung aufsteigend" -> stellplaetzeListe.sortedBy { it.entfernungMeter }
                 "Entfernung absteigend" -> stellplaetzeListe.sortedByDescending { it.entfernungMeter }
                 else -> stellplaetzeListe
             }
         }
     }
-    val fahrzeugTypenListe by viewModel.fahrzeugTypListeFlow.collectAsState(initial = emptyList())
 
     val markers = sortierteListe.map { details ->
         Pair(
             GeoPoint(details.stellplatz.gps_lat.toDouble(), details.stellplatz.gps_lng.toDouble()),
-            "${details.stellplatz.preis_stunde} €"
+            "${details.adresse?.strasse} ${details.adresse?.hausnummer}, ${details.adresse?.ort} - ${details.stellplatz.preis_stunde} €"
         )
     }
 
@@ -169,9 +194,9 @@ fun SucheScreen(
     )
 
     LaunchedEffect(showFehler) {
-        if (showFehler) {
+        if (showFehler && showFehlerMessage != "") {
             snackbarHostState.showSnackbar(
-                message = "Die Startzeit muss vor der Endzeit liegen.",
+                message = showFehlerMessage,
                 duration = SnackbarDuration.Short
             )
             showFehler = false
@@ -183,12 +208,22 @@ fun SucheScreen(
         state = datePickerState,
         onDismiss = { showDatePicker = false },
         onConfirm = { millis ->
-            val sdf = java.text.SimpleDateFormat("d. MMM", java.util.Locale.GERMAN)
-            datum = sdf.format(java.util.Date(millis))
-            datumMillis = millis
-            showDatePicker = false
+            val heuteMitternacht = aufMitternachtSetzen(System.currentTimeMillis())
+            val gewaehltesDatum = aufMitternachtSetzen(millis)
+
+            if (gewaehltesDatum < heuteMitternacht) {
+                showDatePicker = false
+                showFehler = true
+                showFehlerMessage = "Das gewählte Datum muss heute oder in der Zukunft liegen."
+            } else {
+                val sdf = java.text.SimpleDateFormat("d. MMM", java.util.Locale.GERMAN)
+                datum = sdf.format(java.util.Date(millis))
+                datumMillis = gewaehltesDatum
+                showDatePicker = false
+            }
         }
     )
+
     SucheTimePickerDialog(
         show = showTimePickerStart,
         title = "Startzeit wählen",
@@ -200,12 +235,28 @@ fun SucheScreen(
         onConfirm = {
             val startMinuten = startHour * 60 + startMinute
             val endMinuten = endHour * 60 + endMinute
-            if (uhrzeitEnd.isEmpty() || startMinuten < endMinuten) {
+
+            // Prüfen ob das gewählte Datum heute ist - nur dann ist eine
+            // Vergangenheits-Prüfung für die Uhrzeit überhaupt nötig.
+            val istHeute = datumMillis != null &&
+                    aufMitternachtSetzen(datumMillis!!) == aufMitternachtSetzen(System.currentTimeMillis())
+
+            val jetztMinuten = run {
+                val cal = Calendar.getInstance()
+                cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
+            }
+
+            if (istHeute && startMinuten < jetztMinuten) {
+                showTimePickerStart = false
+                showFehler = true
+                showFehlerMessage = "Die Startzeit darf nicht in der Vergangenheit liegen."
+            } else if (uhrzeitEnd.isEmpty() || startMinuten < endMinuten) {
                 uhrzeitStart = "%02d:%02d".format(startHour, startMinute)
                 showTimePickerStart = false
             } else {
                 showTimePickerStart = false
                 showFehler = true
+                showFehlerMessage = "Die Startzeit muss vor der Endzeit liegen."
             }
         }
     )
@@ -221,12 +272,26 @@ fun SucheScreen(
         onConfirm = {
             val startMinuten = startHour * 60 + startMinute
             val endMinuten = endHour * 60 + endMinute
-            if (uhrzeitStart.isEmpty() || endMinuten > startMinuten) {
+
+            val istHeute = datumMillis != null &&
+                    aufMitternachtSetzen(datumMillis!!) == aufMitternachtSetzen(System.currentTimeMillis())
+
+            val jetztMinuten = run {
+                val cal = Calendar.getInstance()
+                cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
+            }
+
+            if (istHeute && endMinuten < jetztMinuten) {
+                showTimePickerEnd = false
+                showFehler = true
+                showFehlerMessage = "Die Endzeit darf nicht in der Vergangenheit liegen."
+            } else if (uhrzeitStart.isEmpty() || endMinuten > startMinuten) {
                 uhrzeitEnd = "%02d:%02d".format(endHour, endMinute)
                 showTimePickerEnd = false
             } else {
                 showTimePickerEnd = false
                 showFehler = true
+                showFehlerMessage = "Die Endzeit muss nach der Startzeit liegen."
             }
         }
     )
@@ -239,17 +304,28 @@ fun SucheScreen(
         onDismiss = { showFilterDialog = false }
     )
 
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
+    ) {  _ ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 16.dp)
+                .padding(horizontal = 16.dp),
         ) {
-            item { SucheTitelRow(onFilterClick = { showFilterDialog = true }) }
+            stickyHeader {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(vertical = 8.dp)
+                ) {
+                    SucheTitelRow(
+                        onFilterClick = { showFilterDialog = true },
+                        filterAktiv = !filterIstStandard
+                    )
+                }
+            }
 
             item {
                 OrtSucheField(
@@ -325,6 +401,11 @@ fun SucheScreen(
                         onSortierungSelected = {
                             selectedSortierung = it
                             showSortieren = false
+                            if (it.label == "Preis aufsteigend" || it.label == "Preis absteigend") {
+                                viewModel.updateFilter(
+                                    viewModel.filter.value.copy(preisAufsteigend = it.label == "Preis aufsteigend")
+                                )
+                            }
                         }
                     )
                     Spacer(modifier = Modifier.height(8.dp))

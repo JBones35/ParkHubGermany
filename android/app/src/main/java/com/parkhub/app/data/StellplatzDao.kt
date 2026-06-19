@@ -33,6 +33,9 @@ interface StellplatzDao {
         )
         GROUP BY s.id
         HAVING COALESCE(AVG(b.sterne), 0) >= :minBewertung
+        ORDER BY
+            CASE WHEN :preisAufsteigend = 1 THEN s.preis_stunde END ASC,
+            CASE WHEN :preisAufsteigend = 0 THEN s.preis_stunde END DESC
         """
     )
     fun getGefiltert(
@@ -43,7 +46,8 @@ interface StellplatzDao {
         maxPreis: Float,
         minBewertung: Float,
         von: Long,
-        bis: Long
+        bis: Long,
+        preisAufsteigend: Boolean
     ): Flow<List<Stellplatz>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

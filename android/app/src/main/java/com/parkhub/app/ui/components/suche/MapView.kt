@@ -26,17 +26,46 @@ fun OsmMapView(
                 setMultiTouchControls(true)
                 controller.setZoom(15.0)
                 controller.setCenter(GeoPoint(latitude, longitude))
-                markers.forEach { (point, label) ->
-                    val marker = Marker(this)
-                    marker.position = point
-                    marker.title = label
-                    marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    overlays.add(marker)
-                }
             }
         },
         update = { mapView ->
             mapView.controller.setCenter(GeoPoint(latitude, longitude))
+
+            mapView.overlays.removeAll { it is Marker }
+
+            markers.forEach { (point, label) ->
+                val marker = Marker(mapView)
+                marker.position = point
+                marker.title = label
+                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+
+                marker.setOnMarkerClickListener { clickedMarker, mv ->
+                    val versatzPunkte = mv.projection.fromPixels(
+                        0,
+                        (mv.height * 0.65).toInt()
+                    )
+                    val mittelpunkt = mv.projection.fromPixels(
+                        mv.width / 2,
+                        mv.height / 2
+                    )
+
+                    val latVersatz = (mittelpunkt as GeoPoint).latitude -
+                            (versatzPunkte as GeoPoint).latitude
+
+                    val zielPunkt = GeoPoint(
+                        clickedMarker.position.latitude + latVersatz,
+                        clickedMarker.position.longitude
+                    )
+
+                    mv.controller.animateTo(zielPunkt)
+                    clickedMarker.showInfoWindow()
+                    true
+                }
+
+                mapView.overlays.add(marker)
+            }
+
+            mapView.invalidate()
         }
     )
 }

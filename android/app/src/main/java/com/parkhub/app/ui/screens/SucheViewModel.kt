@@ -30,7 +30,8 @@ data class StellplatzFilter(
     val minBewertung: Float = 0f,
     val fahrzeugTyp: FahrzeugTyp? = null,
     val von: Long = System.currentTimeMillis(),
-    val bis: Long = System.currentTimeMillis() + 2 * 60 * 60 * 1000
+    val bis: Long = System.currentTimeMillis() + 2 * 60 * 60 * 1000,
+    val preisAufsteigend: Boolean = true
 )
 
 data class StellplatzMitDetails(
@@ -71,7 +72,8 @@ class SucheViewModel(
                 maxPreis = f.maxPreis,
                 minBewertung = f.minBewertung,
                 von = f.von,
-                bis = f.bis
+                bis = f.bis,
+                preisAufsteigend = f.preisAufsteigend
             )
         }
 

@@ -1,5 +1,6 @@
 package com.parkhub.app.ui.components.suche
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -46,7 +47,21 @@ fun StellplatzFilterDialog(
                     fontSize = 14.sp,
                     color = ParkHubGreen,
                     fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(8.dp)
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clickable {
+                            val standard = StellplatzFilter()
+                            onFilterChange(
+                                filter.copy(
+                                    minLaenge = standard.minLaenge,
+                                    minBreite = standard.minBreite,
+                                    minHoehe = standard.minHoehe,
+                                    minPreis = standard.minPreis,
+                                    maxPreis = standard.maxPreis,
+                                    minBewertung = standard.minBewertung
+                                )
+                            )
+                        }
                 )
             }
 
