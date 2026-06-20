@@ -12,6 +12,9 @@ interface BuchungDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(liste: List<Buchung>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(buchung: Buchung)
+
     @Delete
     suspend fun delete(buchung: Buchung): Int
 }

@@ -35,5 +35,6 @@ data class Stellplatz(
     val videoUeberwacht: Boolean = true,
     val videoHinweis: String = "24/7 Aufzeichnung",
     val zugangsart: String = "Code-Tor",
-    val zugangshinweis: String = "Code wird vor Ankunft übermittelt"
+    val zugangshinweis: String = "Code wird vor Ankunft übermittelt",
+    val bildName: String = "hauptstrasse_18"
 )

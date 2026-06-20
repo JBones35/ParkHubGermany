@@ -25,6 +25,9 @@ import com.parkhub.app.ui.components.PillTabRow
 import com.parkhub.app.ui.components.suche.*
 import com.parkhub.app.ui.theme.Gray
 import org.osmdroid.util.GeoPoint
+import androidx.compose.runtime.rememberCoroutineScope
+import com.parkhub.app.model.Buchung
+import kotlinx.coroutines.launch
 
 /**
  * Haupt-Screen für die Stellplatzsuche.
@@ -41,6 +44,8 @@ import org.osmdroid.util.GeoPoint
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SucheScreen(
+    state: SucheUiState,
+    onDetailScreenChanged: (Boolean) -> Unit = {},
     viewModel: SucheViewModel = viewModel(
         factory = SucheViewModelFactory(
             stellplatzDao = AppDatabase.getDatabase(LocalContext.current).stellplatzDao(),
@@ -50,9 +55,19 @@ fun SucheScreen(
         )
     )
 ) {
-    val state = rememberSucheUiState()
     var ausgewaehlterStellplatz by remember { mutableStateOf<StellplatzMitDetails?>(null) }
     var zeigeBuchungsBestaetigung by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val db = AppDatabase.getDatabase(context)
+    val coroutineScope = rememberCoroutineScope()
+    val fahrzeuge by db.fahrzeugDao().getAllFahrzeug().collectAsState(initial = emptyList())
+
+    val istUnterScreenAktiv = ausgewaehlterStellplatz != null
+
+    LaunchedEffect(istUnterScreenAktiv) {
+        onDetailScreenChanged(istUnterScreenAktiv)
+    }
 
     if (zeigeBuchungsBestaetigung && ausgewaehlterStellplatz != null) {
         BuchungsBestaetigungScreen(
@@ -63,8 +78,27 @@ fun SucheScreen(
             fahrer = null,
             onBackClick = { zeigeBuchungsBestaetigung = false },
             onJetztBuchenClick = {
-                zeigeBuchungsBestaetigung = false
-                ausgewaehlterStellplatz = null
+                val details = ausgewaehlterStellplatz
+                val von = state.suchVon
+                val bis = state.suchBis
+                val fahrzeug = fahrzeuge.firstOrNull()
+
+                if (details != null && von != null && bis != null && fahrzeug != null) {
+                    coroutineScope.launch {
+                        db.buchungDao().insert(
+                            Buchung(
+                                stellplatzId = details.stellplatz.id,
+                                logistikId = java.util.UUID.randomUUID(),
+                                fahrzeugId = fahrzeug.id,
+                                von = von,
+                                bis = bis
+                            )
+                        )
+
+                        zeigeBuchungsBestaetigung = false
+                        ausgewaehlterStellplatz = null
+                    }
+                }
             }
         )
         return

@@ -26,6 +26,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 
 @SuppressLint("DefaultLocale")
 @Composable
@@ -41,6 +45,13 @@ fun StellplatzDetailScreen(
     val stunden = berechneStunden(von, bis)
     val gesamtpreis = preisProStunde * stunden
 
+    val context = LocalContext.current
+    val bildResId = context.resources.getIdentifier(
+        stellplatz.stellplatz.bildName,
+        "drawable",
+        context.packageName
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -52,6 +63,15 @@ fun StellplatzDetailScreen(
                 .height(220.dp)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
+            if (bildResId != 0) {
+                Image(
+                    painter = painterResource(id = bildResId),
+                    contentDescription = "Bild des Stellplatzes",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

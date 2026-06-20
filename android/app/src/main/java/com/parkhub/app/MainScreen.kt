@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.parkhub.app.ui.screens.FlotteScreen
 import com.parkhub.app.ui.screens.SucheScreen
 import com.parkhub.app.ui.theme.Gray
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import com.parkhub.app.ui.screens.rememberSucheUiState
 
 
 sealed class BottomNavItem(
@@ -27,6 +29,8 @@ sealed class BottomNavItem(
 @Composable
 fun MainScreen() {
     var selectedItem by remember { mutableStateOf(0) }
+    var bottomBarVisible by remember { mutableStateOf(true) }
+    val sucheUiState = rememberSucheUiState()
 
     val items = listOf(
         BottomNavItem.Suchen,
@@ -35,41 +39,53 @@ fun MainScreen() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface
-            ) {
-                items.forEachIndexed { index, item ->
-                    NavigationBarItem(
-                        selected = selectedItem == index,
-                        onClick = { selectedItem = index },
-                        icon = {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.label
+            if (bottomBarVisible) {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ) {
+                    items.forEachIndexed { index, item ->
+                        NavigationBarItem(
+                            selected = selectedItem == index,
+                            onClick = { selectedItem = index },
+                            icon = {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.label
+                                )
+                            },
+                            label = { Text(item.label) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.onBackground,
+                                selectedTextColor = MaterialTheme.colorScheme.onBackground,
+                                indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                                unselectedIconColor = Gray,
+                                unselectedTextColor = Gray
                             )
-                        },
-                        label = { Text(item.label) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onBackground,
-                            selectedTextColor = MaterialTheme.colorScheme.onBackground,
-                            indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                            unselectedIconColor = Gray,
-                            unselectedTextColor = Gray
                         )
-                    )
+                    }
                 }
             }
         }
     ) { innerPadding ->
+
+        val saveableStateHolder = rememberSaveableStateHolder()
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
             contentAlignment = Alignment.Center
         ) {
-            when (selectedItem) {
-                0 -> SucheScreen()
-                1 -> FlotteScreen()
+            saveableStateHolder.SaveableStateProvider(selectedItem) {
+                when (selectedItem) {
+                    0 -> SucheScreen(
+                        state = sucheUiState,
+                        onDetailScreenChanged = { isDetailScreen ->
+                            bottomBarVisible = !isDetailScreen
+                        }
+                    )
+                    1 -> FlotteScreen()
+                }
             }
         }
     }

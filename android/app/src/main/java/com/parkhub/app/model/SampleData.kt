@@ -70,23 +70,23 @@ val adresseListe = listOf(adresse1, adresse2, adresse3, adresse4, adresse5)
 // ===== STELLPLATZ =====
 val stellplatz1 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000001"), "Familie Becker", adresse1.id,
-    250f, 600f, 220f, 3.40f, 49.0069f, 8.4037f
+    250f, 600f, 220f, 3.40f, 49.0069f, 8.4037f, bildName = "hauptstrasse_18"
 )
 val stellplatz2 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000002"), "Thomas Reiner", adresse2.id,
-    240f, 580f, 215f, 4.20f, 49.0089f, 8.4010f
+    240f, 580f, 215f, 4.20f, 49.0089f, 8.4010f, bildName = "kaiserstrasse_142"
 )
 val stellplatz3 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000003"), "Sabine Klein", adresse3.id,
-    230f, 560f, 210f, 2.80f, 49.0050f, 8.4060f
+    230f, 560f, 210f, 2.80f, 49.0050f, 8.4060f, bildName = "sophienstrasse_25"
 )
 val stellplatz4 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000004"), "Michael Vogt", adresse4.id,
-    260f, 620f, 225f, 3.80f, 49.0030f, 8.4090f
+    260f, 620f, 225f, 3.80f, 49.0030f, 8.4090f, bildName = "yorckstrasse_33"
 )
 val stellplatz5 = Stellplatz(
     UUID.fromString("a5000000-0000-0000-0000-000000000005"), "Familie Krüger", adresse5.id,
-    255f, 610f, 218f, 5.20f, 49.3988f, 8.6724f
+    255f, 610f, 218f, 5.20f, 49.3988f, 8.6724f, bildName = "hauptstrasse_18"
 )
 
 val stellplatzListe = listOf(stellplatz1, stellplatz2, stellplatz3, stellplatz4, stellplatz5)
@@ -133,7 +133,7 @@ val buchungListe: List<Buchung> = (0..19).flatMap { tag ->
             fahrzeugId = fahrzeugId,
             von = inTagenUm(tag, 14, 0),
             bis = inTagenUm(tag, 18, 0),
-            status = BuchungStatus.AKTIV
+            status = BuchungStatus.ABGESCHLOSSEN
         )
     }
 }

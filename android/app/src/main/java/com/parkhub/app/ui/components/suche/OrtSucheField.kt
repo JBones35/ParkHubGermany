@@ -130,9 +130,9 @@ fun OrtSucheField(
     }
 
     // Berechtigung wird einmalig beim ersten Anzeigen des Felds angefragt
-    LaunchedEffect(Unit) {
-        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-    }
+    //LaunchedEffect(Unit) {
+    //    permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+    //}
 
     Column {
         OutlinedTextField(
