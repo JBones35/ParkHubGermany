@@ -2,11 +2,14 @@ package com.parkhub.app
 
 import com.parkhub.app.model.stellplatzListe
 import com.parkhub.app.ui.components.suche.alsEntfernungText
+import com.parkhub.app.ui.components.suche.aufMitternachtSetzen
+import com.parkhub.app.ui.components.suche.sortierOptionen
+import com.parkhub.app.ui.screens.StellplatzFilter
 import com.parkhub.app.ui.screens.StellplatzMitDetails
-import com.parkhub.app.ui.screens.sortierOptionen
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Calendar
 
 class SucheScreenLogicTest {
 
@@ -23,6 +26,26 @@ class SucheScreenLogicTest {
             ),
             labels
         )
+    }
+
+    @Test
+    fun stellplatzFilterHatErwarteteStandardwerte() {
+        val filter = StellplatzFilter()
+
+        assertEquals(300f, filter.minLaenge, 0.0f)
+        assertEquals(180f, filter.minBreite, 0.0f)
+        assertEquals(180f, filter.minHoehe, 0.0f)
+        assertEquals(2.0f, filter.minPreis, 0.0f)
+        assertEquals(8.0f, filter.maxPreis, 0.0f)
+        assertEquals(0f, filter.minBewertung, 0.0f)
+        assertTrue(filter.preisAufsteigend)
+    }
+
+    @Test
+    fun stellplatzFilterKannPreisSortierungAufAbsteigendSetzen() {
+        val filter = StellplatzFilter().copy(preisAufsteigend = false)
+
+        assertEquals(false, filter.preisAufsteigend)
     }
 
     @Test
@@ -79,6 +102,26 @@ class SucheScreenLogicTest {
 
         assertTrue(entfernungText.endsWith(" km"))
         assertTrue(entfernungText.startsWith("1"))
+    }
+
+    @Test
+    fun aufMitternachtSetzenEntferntUhrzeitVomZeitpunkt() {
+        val zeitpunkt = Calendar.getInstance().apply {
+            set(2026, Calendar.JUNE, 20, 15, 45, 12)
+            set(Calendar.MILLISECOND, 345)
+        }.timeInMillis
+
+        val mitternacht = Calendar.getInstance().apply {
+            timeInMillis = aufMitternachtSetzen(zeitpunkt)
+        }
+
+        assertEquals(2026, mitternacht.get(Calendar.YEAR))
+        assertEquals(Calendar.JUNE, mitternacht.get(Calendar.MONTH))
+        assertEquals(20, mitternacht.get(Calendar.DAY_OF_MONTH))
+        assertEquals(0, mitternacht.get(Calendar.HOUR_OF_DAY))
+        assertEquals(0, mitternacht.get(Calendar.MINUTE))
+        assertEquals(0, mitternacht.get(Calendar.SECOND))
+        assertEquals(0, mitternacht.get(Calendar.MILLISECOND))
     }
 
     private fun stellplatzMitEntfernung(index: Int, entfernungMeter: Int): StellplatzMitDetails =
